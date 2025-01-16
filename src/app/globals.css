@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes tickerMotion {
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+  
+  /* Utility class to apply the ticker animation */
+  .animate-ticker-motion {
+    animation: tickerMotion 35s linear infinite;
+    animation-timing-function: linear;
+    animation-play-state: running; /* default is 'running' */
+  }
+  
+
+  
