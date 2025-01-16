@@ -8,7 +8,7 @@ import {
   motion,
   useMotionTemplate,
   useMotionValue,
-  ValueAnimationTransition,
+  Transition, // <-- Use `Transition` instead of `ValueAnimationTransition`
 } from "framer-motion";
 import {
   useEffect,
@@ -79,7 +79,8 @@ const FeatureTab = (
       1,
     ];
 
-    const options: ValueAnimationTransition = {
+    // Use `Transition` or omit the type to let TypeScript infer it
+    const options: Transition = {
       times,
       duration: 4,
       repeat: Infinity,
@@ -89,7 +90,7 @@ const FeatureTab = (
 
     animate(xPercentage, [0, 100, 100, 0, 0], options);
     animate(yPercentage, [0, 0, 100, 100, 0], options);
-  }, []);
+  }, [xPercentage, yPercentage]);
 
   const handleTabHover = () => {
     // Restart and play the Lottie animation on hover
@@ -143,7 +144,7 @@ export const Features = () => {
 
   useEffect(() => {
     // Use GSAP Context for scoping
-    let ctx = gsap.context(() => {
+    const ctx = gsap.context(() => {
       // Fade in "Your Ultimate Study Hub."
       gsap.fromTo(
         ".features-heading-1",
@@ -174,7 +175,7 @@ export const Features = () => {
         }
       );
 
-      // Fade in "It's everything you need to conquer your studies..."
+      // Fade in "It&apos;s everything you need..."
       gsap.fromTo(
         ".features-subheading-2",
         { autoAlpha: 0, y: 50 },
@@ -204,19 +205,6 @@ export const Features = () => {
         <p className="features-subheading-1 text-white/50 font-semibold text-2xl md:text-3xl tracking-tight text-center mt-8 max-w-4xl mx-auto">
           Meet <span className="text-[#8c44ff]">Lemora</span>
         </p>
-
-        {/* Example tab usage if needed:
-        <div className="mt-10 flex flex-col lg:flex-row gap-3">
-          {tabs.map((tab, tabIndex) => (
-            <FeatureTab
-              {...tab}
-              selected={selectedTab === tabIndex}
-              onClick={() => setSelectedTab(tabIndex)}
-              key={tab.title}
-            />
-          ))}
-        </div>
-        */}
       </div>
 
       <FeaturesBento />
@@ -224,7 +212,7 @@ export const Features = () => {
       <div className="container">
         {/* Fade-in target */}
         <p className="features-subheading-2 text-white/50 font-semibold text-3xl md:text-4xl tracking-tight text-center py-40 max-w-4xl mx-auto">
-          It's{" "}
+          It&apos;s{" "}
           <span className="text-[#8c44ff]">
             everything you need to conquer your studies
           </span>
