@@ -4,6 +4,17 @@
 
 @layer utilities {
   /* Remove the border-border utility class */
+  
+  /* Fix for italic text color in Chrome */
+  em {
+    font-style: italic;
+    color: inherit;
+  }
+  
+  /* Ensure text within spans with the purple color class properly inherits the color */
+  .text-\[\#876dac\] em {
+    color: inherit;
+  }
 }
 
 @keyframes tickerMotion {
