@@ -140,7 +140,7 @@ export default function Dashboard() {
             </svg>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Today's Focus</p>
+            <p className="text-sm text-gray-500">Today&apos;s Focus</p>
             <p className="text-2xl font-semibold text-gray-900">2h 45m</p>
           </div>
         </div>
@@ -255,7 +255,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tasks List */}
             <div className="bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-sm">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900">Today's Tasks</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">Today&apos;s Tasks</h2>
               <div className="space-y-4">
                 {[
                   { title: 'Complete Biology Notes', time: '9:00 AM', completed: true },
