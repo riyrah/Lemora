@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -8,7 +8,8 @@ type Flashcard = {
   back: string;
 };
 
-export default function FlashcardsPage() {
+// Create a client component that uses useSearchParams
+const FlashcardsContent = () => {
   const searchParams = useSearchParams();
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -81,5 +82,14 @@ export default function FlashcardsPage() {
         </div>
       </div>
     </div>
+  );
+};
+
+// Main page component that wraps the client component in Suspense
+export default function FlashcardsPage() {
+  return (
+    <Suspense fallback={<div>Loading flashcards...</div>}>
+      <FlashcardsContent />
+    </Suspense>
   );
 } 
