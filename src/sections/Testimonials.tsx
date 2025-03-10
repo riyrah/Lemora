@@ -126,7 +126,7 @@ export const Testimonials = () => {
       <div className="container">
         {/* Replace h2 with TextAnimate */}
         <TextAnimate
-          className="testimonials-heading-1 text-6xl md:text-7xl font-semibold text-center tracking-tight"
+          className="testimonials-heading-1 text-[2.6rem] md:text-7xl font-semibold text-center tracking-tight"
           animation="blurInUp"
           by="character"
           startOnView={true}
@@ -145,27 +145,27 @@ export const Testimonials = () => {
           ref={marqueeRef}
         >
           {/* Inner container: duplicated testimonials for a seamless loop */}
-          <div className="marquee-content flex gap-5 pr-5 flex-none font-normal">
+          <div className="marquee-content flex gap-3 md:gap-5 pr-3 md:pr-5 flex-none font-normal">
             {[...testimonials, ...testimonials].map((t) => (
               <div
                 key={t.name}
-                className="group border border-white/15 p-6 md:p-8 rounded-[2.5rem] bg-[linear-gradient(to_bottom_left,rgb(140,69,255,.3),black)] max-w-xs md:max-w-md flex-none hover:scale-[1.02] transition-transform duration-300 my-2"
+                className="group border border-white/15 p-4 md:p-6 lg:p-8 rounded-[2rem] md:rounded-[2.5rem] bg-[linear-gradient(to_bottom_left,rgb(140,69,255,.3),black)] max-w-[260px] sm:max-w-xs md:max-w-md flex-none hover:scale-[1.02] transition-transform duration-300 my-2"
               >
-                <div className="text-lg tracking-tight md:text-xl px-3 md:px-0">
+                <div className="text-base md:text-lg lg:text-xl tracking-tight px-1 md:px-3 lg:px-0">
                   {t.text}
                 </div>
-                <div className="flex items-center gap-3 mt-5">
+                <div className="flex items-center gap-2 md:gap-3 mt-4 md:mt-5">
                   <div className="relative flex-shrink-0 after:content-[''] after:absolute after:inset-0 after:bg-[rgb(140,69,244,.7)] after:mix-blend-soft-light before:absolute before:inset-0 before:border before:border-white/30 before:z-10 before:rounded-lg group-hover:after:bg-transparent">
                     <Image
                       src={t.avatarImg}
                       alt={`Avatar for ${t.name}`}
-                      className="w-20 h-20 rounded-lg grayscale group-hover:grayscale-0"
+                      className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-lg grayscale group-hover:grayscale-0"
                     />
                   </div>
 
                   <div>
-                    <div>{t.name}</div>
-                    <div className="text-[#9792b7] text-sm">{t.title}</div>
+                    <div className="text-sm md:text-base">{t.name}</div>
+                    <div className="text-[#9792b7] text-xs md:text-sm">{t.title}</div>
                   </div>
                 </div>
               </div>

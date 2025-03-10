@@ -209,7 +209,7 @@ export const Hero = () => {
       {/* End ring 3 */}
 
       <div className="absolute w-full top-[17%] md:top-[14%] px-4 z-10">
-        <h1 className="text-[4.5rem] whitespace-nowrap md:whitespace-normal md:text-[8rem] md:leading-none font-bold tracking-tighter py-0 md:pb-3 mb-0 bg-white bg-[radial-gradient(100%_100%_at_top_left,white,rgba(248,245,255,0.98),rgba(100,45,185,0.5))] text-transparent bg-clip-text text-center">
+        <h1 className="text-[3.2rem] md:text-[4.5rem] whitespace-nowrap md:whitespace-normal lg:text-[8rem] md:leading-none font-bold tracking-tighter py-0 md:pb-3 mb-0 bg-white bg-[radial-gradient(100%_100%_at_top_left,white,rgba(248,245,255,0.98),rgba(100,45,185,0.5))] text-transparent bg-clip-text text-center">
           Learning, Simplified
         </h1>
         <p className="text-base md:text-[1.5rem] font-medium md:font-normal text-white/85 mt-3 md:mt-6 text-center max-w-[80%] md:max-w-[52rem] mx-auto leading-relaxed tracking-tight">
