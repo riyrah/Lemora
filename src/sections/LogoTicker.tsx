@@ -63,8 +63,8 @@ export const LogoTicker = () => {
     <section className="py-24 md:py-24">
       <div className="container">
         <div className="flex items-center">
-          <div className="flex-1 md:flex-none">
-            <h2 className="font-semibold text-base text-white">Trusted by top students globally</h2>
+          <div className="flex-1 md:flex-none px-3">
+            <h2 className="uppercase font-normal text-sm text-white/80">Trusted by top students globally</h2>
           </div>
           <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)]">
             <div

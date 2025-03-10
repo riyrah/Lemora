@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+
 import avatar1 from "@/assets/avatar-1.png";
 import avatar2 from "@/assets/avatar-2.png";
 import avatar3 from "@/assets/avatar-3.png";
@@ -11,6 +12,7 @@ import avatar4 from "@/assets/avatar-4.png";
 import avatar5 from "@/assets/avatar-5.png";
 import avatar6 from "@/assets/avatar-6.png";
 import Image from "next/image";
+import { TextAnimate } from "@/components/magicui/text-animate";
 
 // Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -35,13 +37,13 @@ const testimonials = [
     avatarImg: avatar3,
   },
   {
-    text: "“I didn’t realize how much time I wasted before using Lemora. Now, I can organize my week, review shared notes, and use the Pomodoro timer to focus. It’s really like having a personal study assistant.”",
+    text: "“I didn't realize how much time I wasted before using Lemora. Now, I can organize my week, review shared notes, and use the Pomodoro timer to focus. It's really like having a personal study assistant.”",
     name: "Thomas Janssen",
     title: "Business Senior, University of Amsterdam",
     avatarImg: avatar4,
   },
   {
-    text: "“Lemora isn’t just another app; I find that it’s essential. I recorded my lectures and used the AI summarizer to prep for finals total game-changer for me and my friends.”",
+    text: "“Lemora isn't just another app; I find that it's essential. I recorded my lectures and used the AI summarizer to prep for finals total game-changer for me and my friends.”",
     name: "Lukas Müller",
     title: "Engineering Junior, Technical University of Munich",
     avatarImg: avatar5,
@@ -53,6 +55,8 @@ const testimonials = [
     avatarImg: avatar2,
   },
 ];
+
+
 
 export const Testimonials = () => {
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -120,13 +124,19 @@ export const Testimonials = () => {
   return (
     <section ref={testimonialsRef} className="py-18 md:py-32">
       <div className="container">
-        {/* Fade-in target */}
-        <h2 className="testimonials-heading-1 text-6xl md:text-7xl font-semibold text-center tracking-tight">
+        {/* Replace h2 with TextAnimate */}
+        <TextAnimate
+          className="testimonials-heading-1 text-6xl md:text-7xl font-semibold text-center tracking-tight"
+          animation="blurInUp"
+          by="character"
+          startOnView={true}
+        >
           Beyond Expectations.
-        </h2>
+        </TextAnimate>
+
         {/* Fade-in target */}
-        <p className="testimonials-heading-2 text-white/50 font-semibold text-lg md:text-2xl text-center mt-5 tracking-tight max-w-sm mx-auto">
-          See for yourself.
+        <p className="testimonials-heading-2 text-white/50 font-semibold text-2xl md:text-3xl text-center mt-5 tracking-tight max-w-xl mx-auto">
+        The <span className="text-[#876dac]"><em>smartest</em></span> way to master any subject.
         </p>
 
         {/* Marquee container */}
@@ -135,11 +145,11 @@ export const Testimonials = () => {
           ref={marqueeRef}
         >
           {/* Inner container: duplicated testimonials for a seamless loop */}
-          <div className="marquee-content flex gap-5 pr-5 flex-none">
+          <div className="marquee-content flex gap-5 pr-5 flex-none font-normal">
             {[...testimonials, ...testimonials].map((t) => (
               <div
                 key={t.name}
-                className="group border border-white/15 p-6 md:p-8 rounded-xl bg-[linear-gradient(to_bottom_left,rgb(140,69,255,.3),black)] max-w-xs md:max-w-md flex-none hover:scale-[1.05] transition-transform duration-300 my-2"
+                className="group border border-white/15 p-6 md:p-8 rounded-[2.5rem] bg-[linear-gradient(to_bottom_left,rgb(140,69,255,.3),black)] max-w-xs md:max-w-md flex-none hover:scale-[1.02] transition-transform duration-300 my-2"
               >
                 <div className="text-lg tracking-tight md:text-xl px-3 md:px-0">
                   {t.text}
@@ -155,7 +165,7 @@ export const Testimonials = () => {
 
                   <div>
                     <div>{t.name}</div>
-                    <div className="text-white/50 text-sm">{t.title}</div>
+                    <div className="text-[#9792b7] text-sm">{t.title}</div>
                   </div>
                 </div>
               </div>

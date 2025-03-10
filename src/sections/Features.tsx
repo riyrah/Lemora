@@ -104,11 +104,13 @@ const FeatureTab = (
       ref={tabRef}
       onMouseEnter={handleTabHover}
       onClick={props.onClick}
-      whileHover={{ scale: 1.03 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30, duration: 0.2 }}
       className="border border-white/15 flex p-2.5 rounded-xl gap-2.5 items-center 
                  lg:flex-1 relative transition-colors duration-200 
-                 hover:border-[#A369FF]/50 hover:bg-white/5 cursor-pointer"
+                 hover:border-[#A369FF]/50 hover:bg-white/5 cursor-pointer
+                 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:ring-offset-2 focus:ring-offset-[#0A0A0A]"
     >
       {props.selected && (
         <motion.div
@@ -198,12 +200,17 @@ export const Features = () => {
     <section ref={featuresRef} className="py-20 md:py-32 mt-28">
       <div className="container">
         {/* Fade-in target */}
-        <h2 className="features-heading-1 text-6xl md:text-7xl font-semibold text-center tracking-tighter">
-          Your Ultimate Study Hub.
-        </h2>
+      <h2
+  className="features-heading-1 text-6xl md:text-7xl font-semibold text-center tracking-tighter bg-gradient-to-b from-[#ffffff] to-[#8c8c8c] text-transparent bg-clip-text"
+>
+  Enter Lemora.
+</h2>
+
+
+
         {/* Fade-in target */}
         <p className="features-subheading-1 text-white/50 font-semibold text-2xl md:text-3xl tracking-tight text-center mt-8 max-w-4xl mx-auto">
-          Meet <span className="text-[#8c44ff]">Lemora</span>
+          Your <span className="text-[#876dac]"><em>Secret Weapon</em></span>
         </p>
       </div>
 
@@ -211,12 +218,12 @@ export const Features = () => {
 
       <div className="container">
         {/* Fade-in target */}
-        <p className="features-subheading-2 text-white/50 font-semibold text-3xl md:text-4xl tracking-tight text-center py-40 max-w-4xl mx-auto">
-          It&apos;s{" "}
-          <span className="text-[#8c44ff]">
-            everything you need to conquer your studies
+        <p className="features-subheading-2 text-white/50 font-semibold text-2xl md:text-3xl tracking-tight text-center py-40 max-w-4xl mx-auto">
+        Study effectively, not endlessly. It&apos;s{" "}
+          <span className="text-[#876dac]">
+          <em>everything you need to conquer your studies</em>
           </span>
-          , all in one seamless platform.
+           , all in one seamless platform.
         </p>
       </div>
     </section>

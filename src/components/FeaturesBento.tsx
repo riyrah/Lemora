@@ -17,9 +17,8 @@ const features = [
     title: "Study Faster with AI",
     description: (
       <>
-        <span className="text-white">
         Upload your notes or lectures, and Lemora creates clear summaries and bullet points with references instantly.
-        </span> {" "}
+        {" "}
         Still confused? Get explanations in a different style or just ask questions. Learning has never been this quick.
       </>
     ),
@@ -29,52 +28,43 @@ const features = [
     title: "AI Lecture Recorder",
     description: (
       <>
-        <span className="text-white">
-          Record lectures, and Lemora turns them into detailed notes in seconds.
-        </span>
+        Record lectures, and Lemora turns them into detailed notes in seconds.
         {" "}
         Focus on listening and revising smarter.
       </>
     ),
     lottie: "/assets/lottie/stars.lottie",
   },
+
+  // add this AI icon <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 16 16"><path stroke="currentColor" d="M5.5 1v1.5m-3 3H1m14 0h-1.5M2.5 8H1m14 0h-1.5m-11 2.5H1m14 0h-1.5m-8 3V15M8 1v1.5m0 11V15m2.5-14v1.5m0 11V15m2-12.5 1 1v9l-1 1h-9l-1-1v-9l1-1h9Z"/><path stroke="currentColor" d="M8.5 11V8.5m-3 2.5V8.5m0 0v-2l1-1h2v3m-3 0h3M10.5 5v6"/></svg>
   {
     title: "Ace Exams with Practice",
     description: (
       <>
-        <span className="text-white">
         Create flashcards and quizzes from your learning material to study actively and think critically.
-        </span>{" "}
+        {" "}
         Difficulty adapts as you improve, helping you truly understand the material.
-  
-        
       </>
     ),
     lottie: "/assets/lottie/click.lottie",
     background: "/notesharing.png",
   },
   {
-    title: "Interactive Note Sharing",
+    title: "Quick-Solve Extension",
     description: (
       <>
-        <span className="text-white">
-        Share and discover top-rated notes with peers to prepare better for exams.
-        </span>
+        Snap a screenshot of any problem and our Chrome extension delivers immediate solutions.
         {" "}
-        Collaborate and learn together.
-  
-        
+        Breeze through assignments with AI-powered help.
       </>
     ),
-    lottie: "/assets/lottie/vroom.lottie",
+    image: "/chrome-logo.png",
   },
   {
     title: "Smart Productivity",
     description: (
       <>
-        <span className="text-white">
         Stay organized with a smart to-do list, time-blocked calendar, and a Pomodoro timer with LoFi beats.
-        </span> 
         {" "}
         Access motivational tools to boost focus and crush procrastination. Stronger Mind.
       </>
@@ -191,16 +181,17 @@ function BentoCard({
       ref={cardRef}
       onMouseEnter={handleCardHover}
       onClick={() => onSelect(index)}
-      // Slight scale on hover
-      whileHover={{ scale: 1.03 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      // Must be relative for the absolute border to layer properly
+      // Updated hover and active effects to match button behavior
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30, duration: 0.2 }}
       className={`relative cursor-pointer 
         border border-white/15 
-        rounded-[2.5rem] p-4 md:p-8 bg-black 
+        rounded-[2.5rem] p-4 md:p-8 bg-[#0A0A0A] 
         hover:border-[#A369FF]/50 hover:bg-white/5 
         transition-colors duration-200 flex flex-col
         h-full overflow-hidden
+        focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:ring-offset-2 focus:ring-offset-[#0A0A0A]
       `}
       style={
         background
@@ -244,6 +235,19 @@ function BentoCard({
                 />
               </div>
             )}
+            {image && !(/lemorareallogo/).test(image) && (
+              <div className="w-12 h-12 border border-white/15 rounded-lg inline-flex items-center justify-center flex-shrink-0">
+                <Image
+                  src={image}
+                  alt={title}
+                  width={22}
+                  height={22}
+                  className="w-6 h-6 object-contain"
+                  style={{ opacity: 0.7 }}
+                  priority
+                />
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <h3
                 className={`${titleSize} text-2xl md:text-3xl font-semibold tracking-tighter`}
@@ -251,20 +255,17 @@ function BentoCard({
                 {title}
               </h3>
               {isNew && (
-                <div className="text-xs rounded-full px-2 py-0.5 bg-[#8c44ff] text-black font-semibold">
+                <div className="text-xs rounded-full px-2 py-0.5 bg-[#876dac] text-black font-semibold">
                   new
                 </div>
               )}
             </div>
           </div>
-          <p className="text-white/50 font-semibold text-base md:text-lg tracking-tight">
-  {description}
-</p>
-
-
-
+          <p className="text-[#9792b7] font-normal text-base md:text-lg tracking-tight">
+            {description}
+          </p>
         </div>
-        {image && (
+        {image && (/lemorareallogo/).test(image) && (
           <div className="flex-1 flex items-center justify-center relative">
             <div
               className="relative w-[110px] md:w-[300px] h-auto"
@@ -348,7 +349,7 @@ export default function FeaturesBento() {
                 description={features[3].description}
                 selected={selectedCard === 3}
                 onSelect={setSelectedCard}
-                lottie={features[3].lottie}
+                image={features[3].image}
               />
             </div>
             <div className="w-full h-[350px] md:flex-1">

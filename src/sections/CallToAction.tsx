@@ -50,7 +50,7 @@ export const CallToAction = () => {
       <div className="container">
         <motion.div
           ref={borderedDivRef}
-          className="border border-white/15 py-24 rounded-xl overflow-hidden relative group"
+          className="border border-white/15 py-24 rounded-[2.5rem] overflow-hidden relative group"
           animate={{
             backgroundPositionX: starsBg.width,
           }}
