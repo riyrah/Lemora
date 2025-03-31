@@ -9,6 +9,12 @@ import LogoIcon from "@/assets/lemora.png";
 import { YoutubeSummarizer } from "@/components/YoutubeSummarizer";
 import { getHoursRemainingInYear } from "@/utils/timeCalculations";
 import { AIHumanizer } from "@/components/AIHumanizer";
+import dynamic from 'next/dynamic';
+
+const AIHumanizer = dynamic(() => 
+  import('@/components/AIHumanizer').then(mod => mod.AIHumanizer), 
+  { ssr: false } 
+);
 
 const DashboardButton = ({ 
   children, 
