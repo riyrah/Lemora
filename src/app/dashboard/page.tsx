@@ -8,7 +8,6 @@ import { useState } from "react";
 import LogoIcon from "@/assets/lemora.png";
 import { YoutubeSummarizer } from "@/components/YoutubeSummarizer";
 import { getHoursRemainingInYear } from "@/utils/timeCalculations";
-import { AIHumanizer } from "@/components/AIHumanizer";
 import dynamic from 'next/dynamic';
 
 const AIHumanizer = dynamic(() => 
