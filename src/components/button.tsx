@@ -9,7 +9,7 @@ export const Button = ({ children, isLoading, disabled, ...props }: ButtonProps 
     <button
       {...props}
       disabled={disabled || isLoading}
-      className={`relative py-3 px-6 rounded-3xl text-sm bg-gradient-to-b from-[#1e103a] to-[#5b2ca3] shadow-[0px_0px_25px_rgba(140,69,255,0.7)] transition-all duration-200 transform 
+      className={`relative py-3 px-8 rounded-3xl text-sm bg-gradient-to-b from-[#1e103a] to-[#5b2ca3] shadow-[0px_0px_25px_rgba(140,69,255,0.7)] transition-all duration-200 transform 
         hover:scale-[1.02] hover:shadow-[0px_0px_20px_rgba(140,69,255,0.7),0_0_35px_rgba(140,69,255,0.5)] hover:bg-gradient-to-b hover:from-[#5b2ca3] hover:to-[#a560ff]
         focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-[#18042B]
         active:scale-[0.99] 

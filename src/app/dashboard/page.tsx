@@ -8,6 +8,7 @@ import { useState } from "react";
 import LogoIcon from "@/assets/lemora.png";
 import { YoutubeSummarizer } from "@/components/YoutubeSummarizer";
 import { getHoursRemainingInYear } from "@/utils/timeCalculations";
+import { AIHumanizer } from "@/components/AIHumanizer";
 
 const DashboardButton = ({ 
   children, 
@@ -46,50 +47,25 @@ const DashboardButton = ({
 };
 
 export default function Dashboard() {
-  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'pomodoro' | 'summaries'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'pomodoro' | 'summaries' | 'humanizer'>('dashboard');
   const [activeFolderTab, setActiveFolderTab] = useState('Today');
   const [activeNoteTab, setActiveNoteTab] = useState('Today');
 
-  const TopNav = () => (
-    <nav className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 p-4 z-10">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-6">
-          <Link href="/">
-            <div className="inline-flex items-center justify-center border-gray-200 bg-white shadow-sm">
-              <img src={LogoIcon.src} className="h-9 w-auto" alt="Lemora Logo" />
-            </div>
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-3">
-            <DashboardButton variant="secondary" className="gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              New Note
-            </DashboardButton>
-            <DashboardButton variant="primary" className="gap-2" onClick={() => setActiveView('pomodoro')}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Start Timer
-            </DashboardButton>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 font-medium shadow-sm">
-            U
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-
   const Sidebar = () => (
-    <aside className="w-60 fixed left-0 top-20 h-full bg-white border-r border-gray-100 p-6 flex flex-col">
+    <aside className="w-60 fixed left-0 top-0 h-screen bg-white border-r border-gray-100 p-6 flex flex-col">
+      <div className="mb-6 pb-4 border-b border-gray-100">
+        <Link href="/">
+          <div className="inline-flex items-center justify-center">
+            <img src={LogoIcon.src} className="h-8 w-auto" alt="Lemora Logo" />
+          </div>
+        </Link>
+      </div>
       <nav className="space-y-1 flex-1">
         {[
           { id: 'dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
           { id: 'calendar', label: 'Calendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { id: 'summaries', label: 'AI Tools', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+          { id: 'humanizer', label: 'AI Humanizer', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
           { id: 'pomodoro', label: 'Pomodoro', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
         ].map((item) => (
           <button
@@ -195,7 +171,7 @@ export default function Dashboard() {
   );
 
   const Content = () => (
-    <main className="ml-64 h-[calc(100vh-80px)]">
+    <main className="ml-64 h-screen">
       {/* Always render PomodoroTimer but control visibility */}
       <div className={`h-full ${activeView !== 'pomodoro' ? 'hidden' : ''}`}>
         <PomodoroTimer onComplete={() => setActiveView('dashboard')} />
@@ -206,30 +182,12 @@ export default function Dashboard() {
       ) : activeView === 'calendar' ? (
         <div className="h-full bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-6 flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <DashboardButton variant="secondary">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </DashboardButton>
-              <DashboardButton variant="primary">Today</DashboardButton>
-              <DashboardButton variant="secondary">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </DashboardButton>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <DashboardButton variant="secondary" active={true}>Day</DashboardButton>
-              <DashboardButton variant="secondary">Week</DashboardButton>
-              <DashboardButton variant="secondary">Month</DashboardButton>
-              <DashboardButton variant="primary" onClick={() => setActiveView('dashboard')}>Back to Notes</DashboardButton>
-            </div>
           </div>
           
           <Calendar />
         </div>
+      ) : activeView === 'humanizer' ? (
+        <AIHumanizer onClose={() => setActiveView('dashboard')} />
       ) : activeView === 'dashboard' ? (
         <div className="h-full overflow-y-auto p-8 pt-6">
           {/* Welcome Section */}
@@ -368,9 +326,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <TopNav />
       <Sidebar />
       <Content />
+      <div className="fixed bottom-4 left-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md z-50">
+        BETA
+      </div>
     </div>
   );
 }

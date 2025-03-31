@@ -22,7 +22,6 @@ const features = [
         Still confused? Get explanations in a different style or just ask questions. Learning has never been this quick.
       </>
     ),
-    image: "/lemorareallogo.png",
   },
   {
     title: "AI Lecture Recorder",
@@ -298,72 +297,70 @@ export default function FeaturesBento() {
   return (
     <section className="relative container mx-auto py-20 md:py-10 bg-black">
       <div className="px-4">
-        <div className="flex flex-col gap-7 mt-7">
-          <div className="flex flex-col md:flex-row gap-7 md:h-[700px] relative">
-            <div className="w-full h-[300px] md:h-auto md:flex-1">
+        <div className="flex flex-col gap-8">
+          {/* First row - Full width horizontal box */}
+          <div className="h-[300px] md:h-[350px]">
+            <BentoCard
+              index={0}
+              animationOrder={0}
+              title={features[0].title}
+              description={features[0].description}
+              selected={selectedCard === 0}
+              onSelect={setSelectedCard}
+              titleSize="text-3xl"
+            />
+          </div>
+
+          {/* Second row - Two boxes stacked next to each other */}
+          <div className="flex flex-col md:flex-row gap-8 md:h-[350px]">
+            <div className="w-full md:w-1/2 h-[300px] md:h-full">
               <BentoCard
-                index={0}
-                animationOrder={0}
-                title={features[0].title}
-                description={features[0].description}
-                selected={selectedCard === 0}
+                index={1}
+                animationOrder={1}
+                title={features[1].title}
+                description={features[1].description}
+                selected={selectedCard === 1}
                 onSelect={setSelectedCard}
-                titleSize="text-3xl"
-                image={features[0].image}
+                lottie={features[1].lottie}
               />
             </div>
-
-            <div className="w-full md:w-[475px] flex flex-col gap-7 h-full relative">
-              <div className="h-[300px] md:h-1/2">
-                <BentoCard
-                  index={1}
-                  animationOrder={1}
-                  title={features[1].title}
-                  description={features[1].description}
-                  selected={selectedCard === 1}
-                  onSelect={setSelectedCard}
-                  lottie={features[1].lottie}
-                />
-              </div>
-              <div className="h-[300px] md:h-1/2">
-                <BentoCard
-                  index={2}
-                  animationOrder={2}
-                  title={features[2].title}
-                  description={features[2].description}
-                  selected={selectedCard === 2}
-                  onSelect={setSelectedCard}
-                  lottie={features[2].lottie}
-                  // background={features[2].background}
-                />
-              </div>
+            <div className="w-full md:w-1/2 h-[300px] md:h-full">
+              <BentoCard
+                index={2}
+                animationOrder={2}
+                title={features[2].title}
+                description={features[2].description}
+                selected={selectedCard === 2}
+                onSelect={setSelectedCard}
+                lottie={features[2].lottie}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-7 md:h-[300px] relative">
-            <div className="w-full h-[350px] md:w-[400px]">
-              <BentoCard
-                index={3}
-                animationOrder={3}
-                title={features[3].title}
-                description={features[3].description}
-                selected={selectedCard === 3}
-                onSelect={setSelectedCard}
-                image={features[3].image}
-              />
-            </div>
-            <div className="w-full h-[350px] md:flex-1">
-              <BentoCard
-                index={4}
-                animationOrder={4}
-                title={features[4].title}
-                description={features[4].description}
-                selected={selectedCard === 4}
-                onSelect={setSelectedCard}
-                lottie={features[4].lottie}
-                isNew={features[4].isNew}
-              />
-            </div>
+          {/* Third row - Full width horizontal box */}
+          <div className="h-[300px] md:h-[350px]">
+            <BentoCard
+              index={3}
+              animationOrder={3}
+              title={features[3].title}
+              description={features[3].description}
+              selected={selectedCard === 3}
+              onSelect={setSelectedCard}
+              image={features[3].image}
+            />
+          </div>
+
+          {/* Fourth row - Full width horizontal box */}
+          <div className="h-[300px] md:h-[350px]">
+            <BentoCard
+              index={4}
+              animationOrder={4}
+              title={features[4].title}
+              description={features[4].description}
+              selected={selectedCard === 4}
+              onSelect={setSelectedCard}
+              isNew={features[4].isNew}
+            />
           </div>
         </div>
       </div>

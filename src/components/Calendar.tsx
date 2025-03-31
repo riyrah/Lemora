@@ -1,16 +1,30 @@
 "use client";
 
-import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addHours } from 'date-fns';
-import { useState } from 'react';
+import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addHours, subDays, endOfWeek, setHours, setMinutes, setSeconds, setMilliseconds, roundToNearestMinutes, addMinutes, subMinutes } from 'date-fns';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { DashboardButton } from "@/components/dashboard-button";
+import { EventEditPopover } from './EventEditPopover';
 
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
   start: Date;
   end: Date;
+  category?: string;
+  goalId?: string;
+  status?: 'planned' | 'logged' | 'incomplete';
   color: string;
+  notes?: string;
 }
+
+const mockCategories: Record<string, { color: string }> = {
+  'Deep Work': { color: '#3b82f6' },
+  'Meetings': { color: '#f97316' },
+  'Personal': { color: '#16a34a' },
+  'Learning': { color: '#8b5cf6' },
+  'Admin': { color: '#6b7280' },
+};
+const defaultCategoryColor = '#d1d5db';
 
 interface CalendarProps {
   onClose?: () => void;
@@ -18,15 +32,32 @@ interface CalendarProps {
 
 export const Calendar = ({ onClose }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>();
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'list'>('week');
+  const [events, setEvents] = useState<CalendarEvent[]>([
+    { id: '1', title: 'Team Sync', start: setHours(new Date(), 9), end: setHours(new Date(), 10), category: 'Meetings', status: 'planned', color: mockCategories['Meetings'].color },
+    { id: '2', title: 'Code Review', start: setHours(addDays(new Date(), 1), 14), end: setMinutes(setHours(addDays(new Date(), 1), 15), 30), category: 'Deep Work', status: 'planned', color: mockCategories['Deep Work'].color },
+    { id: '3', title: 'Gym', start: setHours(subDays(new Date(), 1), 18), end: setHours(subDays(new Date(), 1), 19), category: 'Personal', status: 'logged', color: mockCategories['Personal'].color },
+  ]);
+  const [editingEvent, setEditingEvent] = useState<Partial<CalendarEvent> | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingEventInfo, setResizingEventInfo] = useState<{
+    id: string;
+    initialStart?: Date;
+    initialEnd?: Date;
+    startY: number;
+    dayStart: Date;
+    resizeDirection: 'top' | 'bottom';
+  } | null>(null);
+  const [previewEvent, setPreviewEvent] = useState<CalendarEvent | null>(null);
 
   const handlePrev = () => {
     setCurrentDate(prev => {
-      if (viewMode === 'day') return addDays(prev, -1);
-      if (viewMode === 'week') return addDays(prev, -7);
-      return addDays(prev, -31);
+      if (viewMode === 'day') return subDays(prev, 1);
+      if (viewMode === 'week') return subDays(prev, 7);
+      if (viewMode === 'month') return subDays(prev, 31);
+      return prev;
     });
   };
 
@@ -34,211 +65,422 @@ export const Calendar = ({ onClose }: CalendarProps) => {
     setCurrentDate(prev => {
       if (viewMode === 'day') return addDays(prev, 1);
       if (viewMode === 'week') return addDays(prev, 7);
-      return addDays(prev, 31);
+      if (viewMode === 'month') return addDays(prev, 31);
+      return prev;
     });
   };
 
-  const handleTimeSlotClick = (date: Date) => {
-    const startTime = new Date(date);
-    setNewEvent({
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const calculatePopoverPosition = (event: React.MouseEvent<HTMLElement>) => {
+    if (!scrollContainerRef.current) return { top: 0, left: 0 };
+
+    const clickTarget = event.currentTarget;
+    const containerRect = scrollContainerRef.current.getBoundingClientRect();
+    const targetRect = clickTarget.getBoundingClientRect();
+
+    let top = targetRect.top - containerRect.top + scrollContainerRef.current.scrollTop;
+    let left = targetRect.left - containerRect.left + clickTarget.offsetWidth + 5;
+
+    const popoverWidthEstimate = 320;
+    const popoverHeightEstimate = 250;
+
+    if (left + popoverWidthEstimate > scrollContainerRef.current.clientWidth) {
+      left = targetRect.left - containerRect.left - popoverWidthEstimate - 5;
+    }
+
+    return { top: Math.max(0, top), left: Math.max(0, left) };
+  };
+
+  const handleTimeSlotClick = (startTime: Date, event: React.MouseEvent<HTMLElement>) => {
+    console.log('Slot clicked:', startTime, event);
+    const position = calculatePopoverPosition(event);
+    setEditingEvent({
       start: startTime,
       end: addHours(startTime, 1),
-      color: '#38bdf8' // default color
+      status: 'planned',
+    });
+    setPopoverPosition(position);
+  };
+
+  const handleEventClick = (calendarEvent: CalendarEvent, event: React.MouseEvent<HTMLElement>) => {
+    console.log('Event clicked:', calendarEvent, event);
+    const position = calculatePopoverPosition(event);
+    setEditingEvent(calendarEvent);
+    setPopoverPosition(position);
+  };
+
+  const handleClosePopover = () => {
+    setEditingEvent(null);
+    setPopoverPosition(null);
+  };
+
+  const handleSaveEvent = (eventToSave: CalendarEvent) => {
+    console.log("Saving event:", eventToSave);
+    if (editingEvent?.id) {
+        setEvents(prevEvents => prevEvents.map(ev => ev.id === eventToSave.id ? eventToSave : ev));
+    } else {
+        setEvents(prevEvents => [...prevEvents, eventToSave]);
+    }
+    handleClosePopover();
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+      console.log("Deleting event:", eventId);
+      setEvents(prevEvents => prevEvents.filter(ev => ev.id !== eventId));
+      handleClosePopover();
+  };
+
+  const handleResizeTopMouseDown = (event: React.MouseEvent<HTMLDivElement>, eventToResize: CalendarEvent, dayStart: Date) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsResizing(true);
+    setResizingEventInfo({
+      id: eventToResize.id,
+      initialStart: eventToResize.start,
+      startY: event.clientY,
+      dayStart: dayStart,
+      resizeDirection: 'top',
     });
   };
+
+  const handleResizeBottomMouseDown = (event: React.MouseEvent<HTMLDivElement>, eventToResize: CalendarEvent, dayStart: Date) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsResizing(true);
+    setResizingEventInfo({
+      id: eventToResize.id,
+      initialEnd: eventToResize.end,
+      startY: event.clientY,
+      dayStart: dayStart,
+      resizeDirection: 'bottom',
+    });
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!resizingEventInfo) return;
+
+      const { id, initialStart, initialEnd, startY, dayStart, resizeDirection } = resizingEventInfo;
+      const timeSlotHeight = 48;
+      const deltaY = event.clientY - startY;
+      const minutesPerPixel = 60 / timeSlotHeight;
+      const deltaMinutes = deltaY * minutesPerPixel;
+      
+      const originalEvent = events.find(e => e.id === id);
+      if (!originalEvent) return; 
+
+      let newStartTime = originalEvent.start;
+      let newEndTime = originalEvent.end;
+      const minDuration = 15;
+
+      if (resizeDirection === 'top' && initialStart) {
+        newStartTime = addMinutes(initialStart, deltaMinutes);
+        const earliestAllowedStart = subMinutes(originalEvent.end, minDuration);
+        if (newStartTime > earliestAllowedStart) {
+          newStartTime = earliestAllowedStart;
+        }
+      } else if (resizeDirection === 'bottom' && initialEnd) {
+        newEndTime = addMinutes(initialEnd, deltaMinutes);
+        const minEndTime = addMinutes(originalEvent.start, minDuration);
+        if (newEndTime < minEndTime) {
+            newEndTime = minEndTime;
+        }
+      }
+
+      setPreviewEvent({ ...originalEvent, start: newStartTime, end: newEndTime });
+    };
+
+    const handleMouseUp = (event: MouseEvent) => {
+      if (!resizingEventInfo) return;
+
+      const { id, resizeDirection } = resizingEventInfo;
+      const finalEvent = previewEvent;
+
+      if (finalEvent) {
+          let updatedEventProps: Partial<CalendarEvent> = {};
+          if (resizeDirection === 'top') {
+              updatedEventProps.start = roundToNearestMinutes(finalEvent.start, { nearestTo: 15 });
+          } else if (resizeDirection === 'bottom') {
+              updatedEventProps.end = roundToNearestMinutes(finalEvent.end, { nearestTo: 15 });
+          }
+          
+          setEvents(prevEvents => 
+            prevEvents.map(ev => 
+              ev.id === id ? { ...ev, ...updatedEventProps } : ev
+            )
+          );
+      }
+
+      setIsResizing(false);
+      setResizingEventInfo(null);
+      setPreviewEvent(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, resizingEventInfo, events, previewEvent]);
+
+  const currentWeekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
   const MonthView = () => {
     const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const firstDayOfGrid = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const days = Array.from({ length: 35 }, (_, i) => addDays(firstDayOfGrid, i));
     const weeks: Date[][] = [];
-    
-    while (daysInMonth.length > 0) {
-      weeks.push(daysInMonth.splice(0, 7));
+    while (days.length > 0) {
+      weeks.push(days.splice(0, 7));
     }
+    const displayWeeks = weeks.slice(0, 5);
 
     return (
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="bg-white p-2 text-center text-sm font-semibold text-gray-600">
-            {day}
-          </div>
-        ))}
-        {weeks.flatMap((week, weekIndex) =>
-          week.map((day, dayIndex) => {
-            const dayEvents = events.filter(event => 
-              isSameDay(event.start, day) || isSameDay(event.end, day)
-            );
-            
-            return (
-              <div 
-                key={`${weekIndex}-${dayIndex}`}
-                className={`bg-white p-2 min-h-[120px] cursor-pointer hover:bg-gray-50 
-                  ${!isSameMonth(day, currentDate) ? 'bg-gray-50' : ''}`}
-                onClick={() => handleTimeSlotClick(new Date(day.setHours(9, 0, 0, 0)))}
-              >
-                <div className={`text-sm ${isSameDay(day, new Date()) ? 'bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center' : 'text-gray-600'}`}>
-                  {format(day, 'd')}
+      <div className="flex flex-col h-full">
+        <div className="grid grid-cols-7 border-b border-gray-200">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+            <div 
+              key={day} 
+              className={`p-2 text-center text-xs font-medium text-gray-500 uppercase`}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 h-full flex-1">
+          {displayWeeks.map((week, weekIndex) =>
+            week.map((day, dayIndex) => {
+              const dayEvents = events.filter(event => isSameDay(event.start, day));
+              const isCurrentMonth = isSameMonth(day, currentDate);
+              const isToday = isSameDay(day, new Date());
+
+              return (
+                <div
+                  key={`${weekIndex}-${dayIndex}`}
+                  className={`border-r border-b border-gray-200 p-1 relative cursor-pointer transition-colors duration-150 ease-in-out flex flex-col ${ 
+                    isCurrentMonth 
+                      ? 'bg-white hover:bg-gray-50' 
+                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100 opacity-75'
+                  }`}
+                  onClick={(e) => handleTimeSlotClick(setHours(day, 9), e)}
+                >
+                  <span className={`text-xs font-semibold block text-left w-full ${ 
+                    isToday 
+                    ? 'inline-flex items-center justify-center w-5 h-5 bg-indigo-600 text-white rounded-full' 
+                    : isCurrentMonth ? 'text-gray-700' : 'text-gray-400'
+                  }`}>
+                    {format(day, 'd')}
+                  </span>
+                  <div className="mt-1 space-y-0.5 flex-1 overflow-hidden">
+                    {dayEvents.slice(0, 3).map(event => (
+                      <div
+                        key={event.id}
+                        className={`text-[10px] p-0.5 rounded truncate cursor-pointer hover:opacity-80 ${!isCurrentMonth ? 'opacity-50' : ''}`}
+                        style={{ backgroundColor: event.color || defaultCategoryColor }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEventClick(event, e);
+                        }}
+                      >
+                         <span className={isCurrentMonth ? "text-white font-medium" : "text-gray-200 font-medium"}>{event.title}</span>
+                      </div>
+                    ))}
+                    {dayEvents.length > 3 && (
+                       <div className="text-[10px] text-gray-500 mt-0.5">+{dayEvents.length - 3} more</div>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-1 space-y-1">
-                  {dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80`}
-                      style={{ backgroundColor: event.color }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setNewEvent(event);
-                      }}
-                    >
-                      {format(event.start, 'HH:mm')} {event.title}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
     );
   };
 
   const WeekView = () => {
-    const weekStart = startOfWeek(currentDate);
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    const timeSlotHeight = 48;
+
+    const getEventsForDay = (day: Date) => {
+        return events.filter(event => isSameDay(event.start, day));
+    };
+
+    const getEventStyle = (event: CalendarEvent, dayStart: Date): React.CSSProperties => {
+        const eventToStyle = (previewEvent && previewEvent.id === event.id) ? previewEvent : event;
+        
+        const startOfDay = setHours(setMinutes(setSeconds(setMilliseconds(dayStart, 0), 0), 0), 0);
+        const startMinutes = (eventToStyle.start.getTime() - startOfDay.getTime()) / (1000 * 60);
+        const endMinutes = (eventToStyle.end.getTime() - startOfDay.getTime()) / (1000 * 60);
+        let durationMinutes = endMinutes - startMinutes;
+
+        if (durationMinutes < 15) durationMinutes = 15;
+
+        const top = (startMinutes / 60) * timeSlotHeight;
+        const height = (durationMinutes / 60) * timeSlotHeight;
+
+        return {
+            top: `${top}px`,
+            height: `${height}px`,
+            backgroundColor: eventToStyle.color || defaultCategoryColor,
+            position: 'absolute',
+            left: '2px',
+            right: '2px',
+            zIndex: 10,
+            minHeight: '20px',
+        };
+    };
 
     return (
-      <div className="flex-1 grid grid-cols-8 gap-px bg-gray-200">
-        {/* Time labels column */}
-        <div className="bg-white pt-10">
-          {hours.map(hour => (
-            <div key={hour} className="h-12 text-xs text-gray-500 text-right pr-2">
-              {format(new Date().setHours(hour), 'ha')}
-            </div>
-          ))}
-        </div>
-        
-        {/* Days columns */}
-        {days.map(day => (
-          <div key={day.toString()} className="bg-white">
-            <div className={`p-2 text-center text-sm font-semibold 
-              ${isSameDay(day, new Date()) ? 'bg-purple-100' : ''}`}>
-              {format(day, 'EEE d')}
-            </div>
-            <div className="relative">
-              {hours.map(hour => {
-                const timeSlot = new Date(day.setHours(hour));
-                const slotEvents = events.filter(event => 
-                  isSameDay(event.start, timeSlot) && 
-                  event.start.getHours() === hour
-                );
-
-                return (
-                  <div 
-                    key={hour}
-                    className="h-12 border-t border-gray-100 relative group"
-                    onClick={() => handleTimeSlotClick(timeSlot)}
-                  >
-                    <div className="absolute inset-0 group-hover:bg-purple-50 cursor-pointer" />
-                    {slotEvents.map(event => (
-                      <div
-                        key={event.id}
-                        className="absolute inset-x-0 rounded px-1 cursor-pointer hover:opacity-80 z-10"
-                        style={{ 
-                          backgroundColor: event.color,
-                          top: '2px',
-                          height: 'calc(100% - 4px)'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setNewEvent(event);
-                        }}
-                      >
-                        <span className="text-xs truncate block">
-                          {format(event.start, 'HH:mm')} {event.title}
-                        </span>
-                      </div>
+        <div className="flex flex-col h-full">
+            <div className="flex flex-1 overflow-auto">
+                <div className="w-14 flex-shrink-0 border-r border-gray-200 bg-gray-50">
+                    {hours.map(hour => (
+                        <div key={hour} className="h-12 text-right pr-1 pt-1 border-b border-gray-100 text-xs text-gray-400" style={{ height: `${timeSlotHeight}px`}}>
+                            {format(setHours(new Date(), hour), 'ha')}
+                        </div>
                     ))}
-                  </div>
-                );
-              })}
+                </div>
+
+                {days.map(day => {
+                   const dayEvents = getEventsForDay(day);
+                   return (
+                    <div key={day.toISOString()} className="flex-1 border-r border-gray-200 relative">
+                        {hours.map(hour => (
+                             <div
+                                key={hour}
+                                className="border-b border-gray-100 cursor-pointer hover:bg-indigo-50"
+                                style={{ height: `${timeSlotHeight}px` }}
+                                onClick={(e) => handleTimeSlotClick(setHours(day, hour), e)}
+                             >
+                            </div>
+                        ))}
+                        {dayEvents.map(event => (
+                            <div
+                                key={event.id}
+                                style={getEventStyle(event, day)}
+                                className="rounded p-1 text-white text-xs overflow-hidden cursor-pointer shadow hover:shadow-md transition-shadow"
+                                onClick={(e) => { e.stopPropagation(); handleEventClick(event, e); }}
+                            >
+                                <div className="font-semibold truncate">{event.title}</div>
+                                <div className="text-[10px]">{format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}</div>
+                                {event.category && <div className="text-[10px] opacity-80">{event.category}</div>}
+                                
+                                <div 
+                                  className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize" 
+                                  onMouseDown={(e) => handleResizeTopMouseDown(e, event, day)}
+                                />
+
+                                <div 
+                                  className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize" 
+                                  onMouseDown={(e) => handleResizeBottomMouseDown(e, event, day)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                   );
+                })}
             </div>
-          </div>
-        ))}
-      </div>
+        </div>
     );
   };
 
   const DayView = () => {
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    
-    return (
-      <div className="flex-1 bg-white grid grid-cols-1 gap-px">
-        <div className="p-2 text-center text-sm font-semibold text-gray-600">
-          {format(currentDate, 'EEEE, MMM d')}
-        </div>
-        <div className="relative flex">
-          {/* Time labels */}
-          <div className="w-16 flex-shrink-0">
-            {hours.map(hour => (
-              <div key={hour} className="h-12 text-xs text-gray-500 text-right pr-2 pt-2">
-                {format(new Date().setHours(hour), 'ha')}
-              </div>
-            ))}
-          </div>
-          
-          {/* Time slots */}
-          <div className="flex-1">
-            {hours.map(hour => {
-              const timeSlot = new Date(currentDate.setHours(hour));
-              const slotEvents = events.filter(event => 
-                isSameDay(event.start, timeSlot) && 
-                event.start.getHours() === hour
-              );
-
-              return (
-                <div 
-                  key={hour}
-                  className="h-12 border-t border-gray-100 relative group"
-                  onClick={() => handleTimeSlotClick(timeSlot)}
-                >
-                  <div className="absolute inset-0 group-hover:bg-purple-50 cursor-pointer" />
-                  {slotEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className="absolute inset-x-0 rounded px-2 cursor-pointer hover:opacity-80 z-10"
-                      style={{ 
-                        backgroundColor: event.color,
-                        top: '2px',
-                        height: 'calc(100% - 4px)'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setNewEvent(event);
-                      }}
-                    >
-                      <span className="text-sm truncate block">
-                        {format(event.start, 'HH:mm')} {event.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="p-4">Day View Placeholder - TBD</div>;
   };
 
+  const ListView = () => {
+      return <div className="p-4">List View Placeholder - TBD</div>;
+  }
+
+  const renderView = () => {
+    switch (viewMode) {
+      case 'month': return <MonthView />;
+      case 'week': return <WeekView />;
+      case 'day': return <DayView />;
+      case 'list': return <ListView />;
+      default: return <WeekView />;
+    }
+  };
+
+  const viewTitle = useMemo(() => {
+      if (viewMode === 'month') return format(currentDate, 'MMMM yyyy');
+      if (viewMode === 'week') {
+          const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+          const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+          return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
+      }
+      if (viewMode === 'day') return format(currentDate, 'EEEE, MMM d, yyyy');
+      return '';
+  }, [currentDate, viewMode]);
+
+  // --- Add dedicated Month/Year Title ---
+  const monthYearTitle = useMemo(() => format(currentDate, 'MMMM yyyy'), [currentDate]);
+
   return (
-    <section className="h-full flex flex-col">
-      <div className="flex-1 overflow-auto">
-        {viewMode === 'month' ? <MonthView /> : 
-         viewMode === 'week' ? <WeekView /> : 
-         <DayView />}
+    <div className="bg-white rounded-lg shadow overflow-hidden h-full flex flex-col relative">
+      {/* --- Restructure and Restyle Header --- */}
+      <header className="p-4 border-b border-gray-200 flex items-center justify-between">
+        
+        {/* Left Section: Month/Year Title */}
+        <div className="w-1/3">
+          <h2 className="text-lg font-semibold text-gray-700">{monthYearTitle}</h2>
+        </div>
+
+        {/* Center Section: View Switcher Buttons */}
+        <div className="w-1/3 flex justify-center space-x-1">
+          {(['month', 'week', 'day', 'list'] as const).map(view => (
+             <button
+                key={view}
+                onClick={() => setViewMode(view)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${ 
+                  viewMode === view
+                    ? 'bg-indigo-100 text-indigo-700' // Subtle active state
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+             >
+               {view.charAt(0).toUpperCase() + view.slice(1)}
+             </button>
+          ))}
+        </div>
+
+        {/* Right Section: Navigation */}
+        <div className="w-1/3 flex justify-end items-center space-x-2">
+          <button onClick={handlePrev} className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 transition-colors">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button onClick={goToToday} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Today</button>
+          <button onClick={handleNext} className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 transition-colors">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+          {/* Keep optional close button if needed */} 
+          {onClose && <button onClick={onClose} className="ml-2 p-1.5 rounded-md hover:bg-gray-100 text-gray-500 transition-colors">X</button>}
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-auto" ref={scrollContainerRef}>
+        {renderView()}
       </div>
-    </section>
+
+      {editingEvent && popoverPosition && (
+          <EventEditPopover
+              eventData={editingEvent}
+              onSave={handleSaveEvent}
+              onDelete={handleDeleteEvent}
+              onClose={handleClosePopover}
+              categories={mockCategories}
+              position={popoverPosition}
+          />
+      )}
+    </div>
   );
 };

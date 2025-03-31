@@ -64,7 +64,7 @@ export const LogoTicker = () => {
       <div className="container">
         <div className="flex items-center">
           <div className="flex-1 md:flex-none px-3">
-            <h2 className="uppercase font-normal text-sm text-white/80">Trusted by top students globally</h2>
+            <h2 className="font-normal text-base text-white/80">Trusted by Top Students Globally</h2>
           </div>
           <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)]">
             <div
@@ -78,7 +78,7 @@ export const LogoTicker = () => {
                 <img
                   src={logo.src}
                   key={`first-${logo.src}`}
-                  className="h-8 w-auto md:h-12 md:w-auto grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-300 hover:scale-110"
+                  className="h-8 w-auto md:h-12 md:w-auto grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-300 hover:scale-[1.02]"
                   alt="University Logo"
                 />
               ))}
@@ -87,7 +87,7 @@ export const LogoTicker = () => {
                 <img
                   src={logo.src}
                   key={`second-${logo.src}`}
-                  className="h-8 w-auto md:h-12 md:w-auto grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-300 hover:scale-110"
+                  className="h-8 w-auto md:h-12 md:w-auto grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-300 hover:scale-[1.02]"
                   alt="University Logo"
                 />
               ))}
