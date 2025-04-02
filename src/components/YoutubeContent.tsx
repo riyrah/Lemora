@@ -2,11 +2,19 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import { Button } from "@/components/button";
+import { DashboardButton } from "@/components/dashboard-button";
 import { Flashcard } from "@/types/flashcard";
 import { Flashcards } from "@/components/Flashcards";
 import { Chat } from "@/components/Chat";
 import { useState, useEffect } from 'react';
+import { TranscriptDisplay } from './TranscriptDisplay';
+
+// Import or define TranscriptItem
+interface TranscriptItem {
+    text: string;
+    duration: number;
+    offset: number;
+}
 
 interface YoutubeContentProps {
   url: string;
@@ -18,6 +26,7 @@ interface YoutubeContentProps {
   onReset: () => void;
   onGenerateFlashcards: () => void;
   videoId: string;
+  transcript: TranscriptItem[]; // Add transcript prop
 }
 
 export const YoutubeContent = ({
@@ -29,10 +38,11 @@ export const YoutubeContent = ({
   isGeneratingCards,
   onReset,
   onGenerateFlashcards,
-  videoId
+  videoId,
+  transcript
 }: YoutubeContentProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'flashcards' | 'chat'>('summary');
-  const [panelWidth, setPanelWidth] = useState(70); // Default to 70% width
+  const [panelWidth, setPanelWidth] = useState(60); // Changed default to 60% width
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
@@ -56,6 +66,23 @@ export const YoutubeContent = ({
     };
   }, [isResizing]);
 
+  // Optional: Function to handle timestamp clicks (e.g., seek video)
+  const handleTimestampClick = (timeSeconds: number) => {
+      console.log("Seek video to:", timeSeconds);
+      // Find the iframe element
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+          // Post message to the YouTube player API
+          // NOTE: This requires the enablejsapi=1 parameter in the iframe src
+          //       and potentially listening for 'onReady' event.
+          iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'seekTo',
+              args: [timeSeconds, true] // seconds, allowSeekAhead
+          }), '*');
+      }
+  };
+
   return (
     <motion.div
       key="summary-view"
@@ -68,29 +95,26 @@ export const YoutubeContent = ({
         className="flex h-full w-full resizable-container"
         style={{ userSelect: isResizing ? 'none' : 'auto' }}
       >
-        {/* Left Panel - Video and Notes */}
+        {/* Left Panel - Video and Transcript */}
         <div 
           style={{ 
             width: `${panelWidth}%`,
             pointerEvents: isResizing ? 'none' : 'auto' 
           }}
-          className="flex-shrink-0"
+          className="flex flex-col flex-shrink-0"
         >
           <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden mb-4 flex-shrink-0">
             <iframe
               className="w-full h-full"
-              src={`https://www.youtube.com/embed/${videoId}`}
+              src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
               title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           </div>
           <div className="bg-white rounded-lg p-4 border border-gray-200 flex-1 overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-2">Bulleted Notes Section</h3>
-            <div className="text-gray-600">
-              {/* Placeholder for notes - add actual notes content later */}
-              [Bulleted notes will appear here]
-            </div>
+            <h3 className="text-lg font-semibold mb-3">Transcript</h3>
+            <TranscriptDisplay transcript={transcript} onTimestampClick={handleTimestampClick} />
           </div>
         </div>
 
@@ -154,15 +178,16 @@ export const YoutubeContent = ({
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900">{videoTitle}</h2>
-                  <Button 
+                  <DashboardButton 
+                    variant="solid"
+                    color="primary"
                     onClick={onGenerateFlashcards}
                     disabled={isGeneratingCards}
-                    className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5"
+                    isLoading={isGeneratingCards}
+                    className="px-12"
                   >
-                    {isGeneratingCards ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : 'Generate Flashcards'}
-                  </Button>
+                    {isGeneratingCards ? 'Generating...' : 'Generate Flashcards'}
+                  </DashboardButton>
                 </div>
                 <div className="prose text-gray-700 max-w-none">
                   <ReactMarkdown>{summary}</ReactMarkdown>

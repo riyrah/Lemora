@@ -26,7 +26,7 @@ export const Flashcards = ({ cards }: { cards: Flashcard[] }) => {
           duration: 0.4,
           ease: "easeInOut"
         }}
-        className="flex-1 bg-white rounded-xl shadow-lg cursor-pointer border border-gray-200 min-w-[600px] h-64"
+        className="flex-1 bg-white rounded-xl shadow-lg cursor-pointer border border-gray-200 h-64"
         onClick={() => setIsFlipped(!isFlipped)}
         style={{ 
           transformStyle: 'preserve-3d',

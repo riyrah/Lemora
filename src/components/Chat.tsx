@@ -27,46 +27,60 @@ export const Chat = ({ videoUrl }: { videoUrl: string }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: videoUrl, question: input })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get answer');
+      if (!response.ok || !response.body) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to get answer, unknown error format' }));
+        throw new Error(errorData.error || `Failed to get answer (status: ${response.status})`);
       }
 
-      const reader = response.body?.getReader();
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let currentContent = "";
+      let done = false;
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        done = streamDone;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-          
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n\n');
+
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               try {
-                const data = JSON.parse(line.slice(5));
-                currentContent += data.content;
-                setMessages(prev => prev.map((msg, i) => 
-                  i === prev.length - 1 ? { ...msg, content: currentContent } : msg
-                ));
+                const jsonString = line.substring(5).trim();
+                if (jsonString) {
+                  const data = JSON.parse(jsonString);
+                  if (data.chunk) {
+                    currentContent += data.chunk;
+                    setMessages(prev => prev.map((msg, i) =>
+                      i === prev.length - 1 ? { ...msg, content: currentContent, pending: true } : msg
+                    ));
+                  } else if (data.error) {
+                    console.error('Stream error chunk:', data.error);
+                    currentContent += `\n[Error: ${data.error}]`;
+                    setMessages(prev => prev.map((msg, i) =>
+                      i === prev.length - 1 ? { ...msg, content: currentContent, pending: false } : msg
+                    ));
+                    done = true;
+                    break;
+                  }
+                }
               } catch (e) {
-                console.error('Error parsing chunk:', e);
+                console.error('Error parsing SSE chunk data:', e, 'Raw line:', line);
               }
             }
           }
         }
       }
 
-      // Remove pending state after streaming is complete
-      setMessages(prev => prev.map((msg, i) => 
+      setMessages(prev => prev.map((msg, i) =>
         i === prev.length - 1 ? { ...msg, pending: false } : msg
       ));
     } catch (error) {

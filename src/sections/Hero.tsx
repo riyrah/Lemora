@@ -8,6 +8,7 @@ import { useRef, useEffect } from "react";
 import Image from "next/image";
 import Lenis from "@studio-freight/lenis";
 import gsap from 'gsap'; // Import GSAP
+import ShinyText from "@/components/ShinyText"; // Import ShinyText component
 
 
 // have  a lottie animation saying to scroll down
@@ -88,14 +89,14 @@ export const Hero = () => {
 
       // Set initial states for paragraph and button
       if (pRef.current) {
-        gsap.set(pRef.current, { opacity: 0, y: 20 });
+        gsap.set(pRef.current, { autoAlpha: 0, y: 20 });
       }
       if (buttonRef.current) {
-        gsap.set(buttonRef.current, { opacity: 0, scale: 0.9 });
+        gsap.set(buttonRef.current, { autoAlpha: 0, scale: 0.9 });
       }
       // Set initial states for planet and rings
       if (planetRef.current) {
-        gsap.set(planetRef.current, { opacity: 0, scale: 0.9, y: 30 });
+        gsap.set(planetRef.current, { autoAlpha: 0, scale: 0.9, y: 30 });
       }
       const ringRefs = [ring1Ref.current, ring2Ref.current, ring3Ref.current];
       ringRefs.forEach(ring => {
@@ -105,7 +106,10 @@ export const Hero = () => {
       });
 
       // Create GSAP Timeline
-      const tl = gsap.timeline({ delay: 0.5 }); // Keep initial delay
+      const tl = gsap.timeline({ delay: 0.2 });
+
+      // Make H1 container visible before animating spans
+      gsap.set(h1Element, { opacity: 1 });
 
       // Animate H1 spans
       tl.to(spans, {
@@ -119,7 +123,7 @@ export const Hero = () => {
       // Animate Paragraph after H1 (with slight overlap)
       if (pRef.current) {
         tl.to(pRef.current, {
-          opacity: 1,
+          autoAlpha: 1,
           y: 0,
           duration: 0.9, // Slower duration
           ease: 'power3.out'
@@ -129,7 +133,7 @@ export const Hero = () => {
       // Animate Button after Paragraph (with slight overlap)
       if (buttonRef.current) {
         tl.to(buttonRef.current, {
-          opacity: 1,
+          autoAlpha: 1,
           scale: 1,
           duration: 0.8, // Slower duration
           ease: 'back.out(1.7)'
@@ -142,7 +146,7 @@ export const Hero = () => {
 
       if (planetRef.current) {
           tl.to(planetRef.current, {
-              opacity: 1,
+              autoAlpha: 1,
               scale: 1,
               y: 0,
               duration: 1.0,
@@ -158,8 +162,7 @@ export const Hero = () => {
           if (ring) {
               const targetOpacity = targetOpacities[index]; // Get opacity for this ring
               tl.to(ring, {
-                  opacity: targetOpacity, // Animate to the specific target opacity
-                  visibility: 'visible', // Ensure it becomes visible
+                  autoAlpha: targetOpacity,
                   scale: 1,
                   duration: 1.0,
                   ease: 'power3.out'
@@ -209,7 +212,7 @@ export const Hero = () => {
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.3)_0%,rgba(0,0,0,0.2)_5%,transparent_30%,transparent_70%,rgba(0,0,0,0.2)_95%,rgba(0,0,0,0.3)_100%),linear-gradient(to_right,rgba(0,0,0,0.2),transparent_30%,transparent_70%,rgba(0,0,0,0.2))] pointer-events-none"></div>
 
       {/* Centered container for the logo */}
-      <div ref={planetRef} className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none">
+      <div ref={planetRef} className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none" style={{ opacity: 0 }}>
         {/* Multi-layered glowing rim with directional light effect */}
         <div className="absolute h-[20rem] w-[20rem] md:h-[24.25rem] md:w-[24.25rem] rounded-full
             bg-transparent z-0"
@@ -273,6 +276,7 @@ export const Hero = () => {
           translateY: '50%',
           willChange: 'transform',
           transform: 'translateZ(0)',
+          opacity: 0,
         }}
         animate={{
           rotate: "1turn"
@@ -299,6 +303,7 @@ export const Hero = () => {
           translateY: '50%',
           willChange: 'transform',
           transform: 'translateZ(0)',
+          opacity: 0,
         }}
         animate={{
            rotate: "-1turn"
@@ -320,6 +325,7 @@ export const Hero = () => {
           translateY: '50%',
           willChange: 'transform',
           transform: 'translateZ(0)',
+          opacity: 0,
         }}
         animate={{
            rotate: "1turn"
@@ -339,23 +345,27 @@ export const Hero = () => {
         <h1
           ref={h1Ref} // Attach the ref here
           className="text-[3.2rem] md:text-[4.5rem] whitespace-nowrap md:whitespace-normal lg:text-[8rem] md:leading-none font-bold tracking-tighter py-0 md:pb-3 mb-0 text-center text-white"
+          style={{ opacity: 0 }}
         >
           Learning, Simplified
         </h1>
         <p
           ref={pRef} // Attach ref here
-          className="text-base md:text-[1.5rem] font-medium md:font-normal text-white/85 mt-3 md:mt-6 text-center max-w-[80%] md:max-w-[52rem] mx-auto leading-relaxed tracking-tight">
+          className="text-base md:text-[1.5rem] font-medium md:font-normal text-white/85 mt-3 md:mt-6 text-center max-w-[80%] md:max-w-[52rem] mx-auto leading-relaxed tracking-tight"
+          style={{ opacity: 0 }}
+        >
           Too much to learn, too little time? Upload your content and let AI create the perfect learning materials for you. <em>Your grades will thank you.</em>
         </p>
 
-        <div ref={buttonRef} className="flex justify-center mt-8 md:mt-10"> {/* Attach ref here */}
+        <div ref={buttonRef} className="flex justify-center mt-8 md:mt-10" style={{ opacity: 0 }}> {/* Attach ref here & Add initial opacity 0 */}
           <Link href="/dashboard">
             <div className="relative scale-[1.1] transform-gpu">
               <div className="absolute -inset-1 rounded-3xl border border-white/10 blur-[1px]"></div>
               <Button>
-                <span className="tracking-normal font-normal text-sm">
-                  Get Started For Free
-                </span>
+                <ShinyText 
+                  text="Get Started For Free" 
+                  className="font-normal text-sm"
+                />
               </Button>
             </div>
           </Link>
