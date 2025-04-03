@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/Calendar";
 import { PomodoroTimer } from "@/components/PomodoroTimer";
 import Link from "next/link";
@@ -9,6 +9,31 @@ import LogoIcon from "@/assets/lemora.png";
 import { YoutubeSummarizer } from "@/components/YoutubeSummarizer";
 import { getHoursRemainingInYear } from "@/utils/timeCalculations";
 import dynamic from 'next/dynamic';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarGroup,
+  SidebarFooter,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  NotebookText,
+  BrainCircuit,
+  Timer,
+  User,
+  Settings,
+  ChevronLeft,
+} from "lucide-react";
 
 const AIHumanizer = dynamic(() => 
   import('@/components/AIHumanizer').then(mod => mod.AIHumanizer), 
@@ -56,60 +81,13 @@ export default function Dashboard() {
   const [activeFolderTab, setActiveFolderTab] = useState('Today');
   const [activeNoteTab, setActiveNoteTab] = useState('Today');
 
-  const Sidebar = () => (
-    <aside className="w-60 fixed left-0 top-0 h-screen bg-white border-r border-gray-100 p-6 flex flex-col">
-      <div className="mb-6 pb-4 border-b border-gray-100">
-        <Link href="/">
-          <div className="inline-flex items-center justify-center">
-            <img src={LogoIcon.src} className="h-8 w-auto" alt="Lemora Logo" />
-          </div>
-        </Link>
-      </div>
-      <nav className="space-y-1 flex-1">
-        {[
-          { id: 'dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-          { id: 'calendar', label: 'Calendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-          { id: 'summaries', label: 'AI Summarizer', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-          { id: 'humanizer', label: 'AI Humanizer', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
-          { id: 'pomodoro', label: 'Pomodoro', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => {
-              setActiveView(item.id as any);
-              if (item.id === 'dashboard') {
-                setActiveFolderTab('Today');
-                setActiveNoteTab('Today');
-              }
-            }}
-            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-              activeView === item.id 
-                ? 'bg-purple-50 text-purple-600 font-semibold'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-            </svg>
-            <span className="text-sm">{item.label}</span>
-          </button>
-        ))}
-      </nav>
-      
-      {/* User Profile Section */}
-      <div className="border-t border-gray-100 pt-4 mt-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 font-medium">
-            U
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">Riyaan Patel</p>
-            <p className="text-xs text-gray-500">Computer Science</p>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+    { id: 'summaries', label: 'AI Summarizer', icon: NotebookText },
+    { id: 'humanizer', label: 'AI Humanizer', icon: BrainCircuit },
+    { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
+  ];
 
   const ProductivityMetrics = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -176,25 +154,25 @@ export default function Dashboard() {
   );
 
   const Content = () => (
-    <main className="ml-64 h-screen">
+    <div className="flex-1 h-screen overflow-hidden">
+      <main className="h-full w-full overflow-y-auto">
       {/* Always render PomodoroTimer but control visibility */}
       <div className={`h-full ${activeView !== 'pomodoro' ? 'hidden' : ''}`}>
         <PomodoroTimer onComplete={() => setActiveView('dashboard')} />
       </div>
 
       {activeView === 'summaries' ? (
-        <YoutubeSummarizer onClose={() => setActiveView('dashboard')} />
+        <div className="h-full w-full flex justify-center items-start">
+            <YoutubeSummarizer onClose={() => setActiveView('dashboard')} />
+        </div>
       ) : activeView === 'calendar' ? (
-        <div className="h-full bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-          </div>
-          
-          <Calendar />
+          <div className="h-full w-full">
+            <Calendar />
         </div>
       ) : activeView === 'humanizer' ? (
         <AIHumanizer onClose={() => setActiveView('dashboard')} />
       ) : activeView === 'dashboard' ? (
-        <div className="h-full overflow-y-auto p-8 pt-6">
+          <div className="h-full w-full overflow-y-auto p-8 pt-6">
           {/* Welcome Section */}
           <div className="mb-6">
             <div className="bg-gray-100/70 backdrop-blur-sm p-6 rounded-[2.5rem] shadow-sm">
@@ -327,15 +305,102 @@ export default function Dashboard() {
         </div>
       ) : null}
     </main>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <Sidebar />
+    <div className="h-screen w-screen max-w-[100vw] overflow-hidden bg-[#FAFAFA]">
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex h-full w-full overflow-hidden">
+          <Sidebar 
+            className="border-r border-gray-100 transition-all duration-300 ease-in-out z-20" 
+            collapsible="icon"
+            variant="sidebar"
+          >
+            <SidebarHeader className="border-b border-gray-100 p-4 pl-5 group-data-[collapsible=icon]:px-2">
+              <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
+                <div className="flex-shrink-0 pl-[8px] ml-[2px]">
+                  <Link href="/">
+                    <div className="flex items-center w-[120px] h-8 overflow-hidden group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 transition-all duration-300">
+                      <img 
+                        src={LogoIcon.src} 
+                        className="h-8 w-[120px] object-contain flex-shrink-0" 
+                        alt="Lemora Logo" 
+                        style={{ objectFit: "contain", objectPosition: "left center" }}
+                      />
+                    </div>
+                  </Link>
+                </div>
+                <div className="flex-1"></div>
+                <SidebarTrigger className="rounded-full border border-gray-200 bg-white p-2 hover:bg-gray-50 data-[state=open]:rotate-180 flex-shrink-0 group-data-[collapsible=icon]:mx-auto"> 
+                  <ChevronLeft className="w-4 h-4"/>
+                </SidebarTrigger>
+              </div>
+            </SidebarHeader>
+            <SidebarContent className="p-4 pl-5 group-data-[collapsible=icon]:px-2">
+              <SidebarGroup className="space-y-2">
+                {navItems.map((item) => (
+                  <Tooltip key={item.id} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={activeView === item.id ? "secondary" : "ghost"}
+                        className={`w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:px-0 gap-3 rounded-xl transition-all ${
+                          activeView === item.id ? 'font-semibold' : ''
+                        }`}
+                        onClick={() => {
+                          setActiveView(item.id as any);
+                          if (item.id === 'dashboard') {
+                            setActiveFolderTab('Today');
+                            setActiveNoteTab('Today');
+                          }
+                        }}
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0 group-data-[collapsible=icon]:mx-auto" />
+                        <span className="text-sm group-data-[collapsible=icon]:hidden">
+                          {item.label}
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="ml-2 group-data-[collapsible=icon]:block group-data-[collapsible=offcanvas]:hidden">
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </SidebarGroup>
+            </SidebarContent>
+            <SidebarFooter className="border-t border-gray-100 p-4 mt-auto group-data-[collapsible=icon]:px-2">
+               <Tooltip delayDuration={0}>
+                 <TooltipTrigger asChild>
+                   <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
+                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 font-medium mx-auto">
+                       <User className="w-5 h-5" /> 
+                     </div>
+                     <div className="flex-1 ml-3 group-data-[collapsible=icon]:hidden">
+                       <p className="text-sm font-medium text-gray-900">Riyaan Patel</p>
+                       <p className="text-xs text-gray-500">Computer Science</p>
+                     </div>
+                     <Button variant="ghost" size="icon" className="rounded-full group-data-[collapsible=icon]:hidden">
+                        <Settings className="w-5 h-5"/>
+                     </Button>
+                   </div>
+                 </TooltipTrigger>
+                 <TooltipContent side="right" className="ml-2 group-data-[collapsible=icon]:block group-data-[collapsible=offcanvas]:hidden">
+                   <p>Riyaan Patel</p>
+                   <p className="text-xs text-muted-foreground">Computer Science</p>
+                 </TooltipContent>
+               </Tooltip>
+            </SidebarFooter>
+          </Sidebar>
+          
+          <div className="flex-1 min-w-0 overflow-hidden">
       <Content />
-      <div className="fixed bottom-4 left-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md z-50">
+          </div>
+          
+          <div className="fixed bottom-4 right-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md z-50">
         BETA
       </div>
+        </div>
+      </SidebarProvider>
     </div>
   );
 }
