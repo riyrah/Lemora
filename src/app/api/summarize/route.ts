@@ -106,20 +106,26 @@ export async function POST(request: Request) {
       transcriptText = transcriptData.map(t => t.text).join(' ');
       console.log(`--- [/api/summarize] Transcript fetched successfully, length: ${transcriptText.length} ---`);
     } catch (error: any) { // Ensure error type allows message access
-      console.error(`--- [/api/summarize] Error fetching transcript for Video ID ${videoId}: ---`, error);
-      // --- START FIX: Immediately return error response ---
+      console.error(`--- [/api/summarize] Error fetching transcript for Video ID ${videoId}. Full Error: ---`, error); 
+
+      // --- Add log to see the exact message being checked ---
+      console.log(`--- [/api/summarize] Caught Error Message: [${error.message}] ---`);
+      // --------------------------------------------------------
+
       let errorMessage = 'Failed to fetch transcript.';
       let status = 500; // Default to Internal Server Error
+      // Check the message string for specific errors
       if (error.message?.includes('Transcript is disabled') || error.message?.includes('disabled on this video')) {
+          console.log("--- [/api/summarize] Matched 'Transcript disabled' error. ---"); // Log match
           errorMessage = 'Transcripts are disabled or unavailable for this video.';
           status = 404; // Not Found is appropriate
       } else if (error.message?.includes('Too Many Requests')) {
+           console.log("--- [/api/summarize] Matched 'Too Many Requests' error. ---"); // Log match
            errorMessage = 'Could not fetch transcript due to rate limits. Please try again later.';
            status = 429; // Too Many Requests
       }
       // Return the error response and stop execution here
       return NextResponse.json({ error: 'Transcript fetch failed', message: errorMessage }, { status });
-      // --- END FIX ---
     }
 
     // Fetch Video Title (using oEmbed)
