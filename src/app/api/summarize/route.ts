@@ -96,15 +96,30 @@ export async function POST(request: Request) {
     let transcriptData: { text: string; duration: number; offset: number; }[] = []; // Store structured data
     let transcriptText = ''; // Keep joined text for summary prompt
     try {
+      console.log(`--- [/api/summarize] Attempting transcript fetch for ${videoId} ---`); // Added log
       transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
+      if (!transcriptData || transcriptData.length === 0) {
+          // Handle case where transcript is technically fetched but empty
+          console.log(`--- [/api/summarize] Transcript fetched but is empty for Video ID ${videoId}. ---`);
+          return NextResponse.json({ error: 'Empty transcript', message: 'The video transcript is empty.' }, { status: 404 });
+      }
       transcriptText = transcriptData.map(t => t.text).join(' ');
-      console.log(`--- [/api/summarize] Transcript fetched, length: ${transcriptText.length} ---`);
-    } catch (error) {
+      console.log(`--- [/api/summarize] Transcript fetched successfully, length: ${transcriptText.length} ---`);
+    } catch (error: any) { // Ensure error type allows message access
       console.error(`--- [/api/summarize] Error fetching transcript for Video ID ${videoId}: ---`, error);
-      // Don't return fatal error, allow summary without transcript if needed
-      // But maybe return an indicator?
-      transcriptText = "Transcript unavailable."; // Indicate unavailability for summary
-      // transcriptData will remain empty []
+      // --- START FIX: Immediately return error response ---
+      let errorMessage = 'Failed to fetch transcript.';
+      let status = 500; // Default to Internal Server Error
+      if (error.message?.includes('Transcript is disabled') || error.message?.includes('disabled on this video')) {
+          errorMessage = 'Transcripts are disabled or unavailable for this video.';
+          status = 404; // Not Found is appropriate
+      } else if (error.message?.includes('Too Many Requests')) {
+           errorMessage = 'Could not fetch transcript due to rate limits. Please try again later.';
+           status = 429; // Too Many Requests
+      }
+      // Return the error response and stop execution here
+      return NextResponse.json({ error: 'Transcript fetch failed', message: errorMessage }, { status });
+      // --- END FIX ---
     }
 
     // Fetch Video Title (using oEmbed)
