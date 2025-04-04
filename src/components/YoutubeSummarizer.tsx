@@ -111,9 +111,9 @@ export const YoutubeSummarizer = ({ onClose }: YoutubeSummarizerProps) => {
   };
 
   return (
-    <div className="max-w-full mx-auto h-[calc(100vh-80px)]">
-      <div className="bg-gray-50 rounded-2xl flex h-full">
-        <div className={`flex-1 p-6 relative h-full ${!summary && !isLoading && !error ? 'pt-32' : ''}`}>
+    <div className="w-full h-[calc(100vh-80px)]">
+      <div className="bg-gray-50 rounded-2xl h-full w-full">
+        <div className={`p-6 relative h-full ${!summary && !isLoading && !error ? 'pt-32' : ''}`}>
           <AnimatePresence mode="wait">
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-center">

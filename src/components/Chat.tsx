@@ -93,44 +93,54 @@ export const Chat = ({ videoUrl }: { videoUrl: string }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto pb-4">
-        {messages.map((message, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="px-8 first:mt-8"
-          >
-            <div className={`flex gap-4 -ml-[2.5rem] ${message.isUser ? 'justify-end' : 'items-start'}`}>
-              {!message.isUser && (
-                <div className="flex-shrink-0 w-8 h-8">
-                  <Bot className="w-8 h-8 text-purple-600" />
-                </div>
-              )}
-              <div className={`group relative flex flex-col max-w-[90%] ${
-                message.isUser ? 'items-end' : 'items-start'
-              }`}>
-                <div className={`px-4 py-2 rounded-2xl ${
-                  message.isUser 
-                    ? 'bg-purple-600/10 text-gray-900'
-                    : 'text-gray-900'
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-sm">
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.length === 0 ? (
+          <div className="h-full w-full flex flex-col items-center justify-center text-gray-500 p-8">
+            <Bot className="w-12 h-12 text-gray-300 mb-4" />
+            <p className="text-center">Ask questions about this video.</p>
+            <p className="text-center text-sm mt-2">
+              For example: "What are the key points in this lecture?" or "Explain the concept of P vs NP"
+            </p>
+          </div>
+        ) : (
+          messages.map((message, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="mb-4"
+            >
+              <div className={`flex gap-4 ${message.isUser ? 'justify-end' : 'items-start'}`}>
+                {!message.isUser && (
+                  <div className="flex-shrink-0 w-8 h-8">
+                    <Bot className="w-8 h-8 text-purple-600" />
+                  </div>
+                )}
+                <div className={`group relative flex flex-col max-w-[90%] ${
+                  message.isUser ? 'items-end' : 'items-start'
                 }`}>
-                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                    {message.content}
-                    {message.pending && (
-                      <span className="inline-block w-1.5 h-4 ml-1 bg-purple-600/50 animate-pulse" />
-                    )}
-                  </p>
+                  <div className={`px-4 py-2 rounded-2xl ${
+                    message.isUser 
+                      ? 'bg-purple-600/10 text-gray-900'
+                      : 'text-gray-900'
+                  }`}>
+                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                      {message.content}
+                      {message.pending && (
+                        <span className="inline-block w-1.5 h-4 ml-1 bg-purple-600/50 animate-pulse" />
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
       
-      <div className="border-t border-gray-200 bg-gray-50 p-4">
+      <div className="border-t border-gray-200 bg-gray-50 p-4 rounded-b-xl">
         <form onSubmit={handleSubmit} className="relative">
           <input
             type="text"

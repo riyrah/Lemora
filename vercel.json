@@ -1,0 +1,16 @@
+{
+  "buildCommand": "next build",
+  "cleanUrls": true,
+  "regions": ["sfo1"],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    }
+  ]
+} 

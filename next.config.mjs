@@ -27,6 +27,10 @@ const nextConfig = {
 
     return config;
   },
+  // Add environment variables that should be available to the client
+  env: {
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+  },
 };
 
 export default nextConfig;

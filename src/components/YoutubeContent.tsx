@@ -42,7 +42,7 @@ export const YoutubeContent = ({
   transcript
 }: YoutubeContentProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'flashcards' | 'chat'>('summary');
-  const [panelWidth, setPanelWidth] = useState(60); // Changed default to 60% width
+  const [panelWidth, setPanelWidth] = useState(55); // Changed panel width to 55% for more space
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export const YoutubeContent = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="space-y-6 w-full h-full overflow-hidden"
+      className="w-full h-full"
     >
       <div 
         className="flex h-full w-full resizable-container"
@@ -101,7 +101,7 @@ export const YoutubeContent = ({
             width: `${panelWidth}%`,
             pointerEvents: isResizing ? 'none' : 'auto' 
           }}
-          className="flex flex-col flex-shrink-0"
+          className="flex flex-col flex-shrink-0 overflow-hidden"
         >
           <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden mb-4 flex-shrink-0">
             <iframe
@@ -134,9 +134,9 @@ export const YoutubeContent = ({
             width: `${100 - panelWidth}%`,
             pointerEvents: isResizing ? 'none' : 'auto'
           }}
-          className="flex-shrink-0"
+          className="flex-1 flex flex-col h-full" 
         >
-          <div className="relative border-b border-gray-200">
+          <div className="border-b border-gray-200 flex-shrink-0">
             <div className="flex justify-center">
               <div className="flex">
                 <button
@@ -173,7 +173,8 @@ export const YoutubeContent = ({
             </div>
           </div>
 
-          <div className="h-[calc(100%-49px)] overflow-y-auto">
+          {/* Tab Content Area */}
+          <div className="flex-1 overflow-auto"> 
             {activeTab === 'summary' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -189,7 +190,7 @@ export const YoutubeContent = ({
                     {isGeneratingCards ? 'Generating...' : 'Generate Flashcards'}
                   </DashboardButton>
                 </div>
-                <div className="prose text-gray-700 max-w-none">
+                <div className="prose text-gray-900 max-w-none">
                   <ReactMarkdown>{summary}</ReactMarkdown>
                 </div>
               </div>
@@ -202,7 +203,7 @@ export const YoutubeContent = ({
             )}
 
             {activeTab === 'chat' && (
-              <div className="h-full flex flex-col">
+              <div className="p-6 h-full">
                 <Chat videoUrl={url} />
               </div>
             )}

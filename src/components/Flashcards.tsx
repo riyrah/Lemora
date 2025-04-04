@@ -10,14 +10,14 @@ export const Flashcards = ({ cards }: { cards: Flashcard[] }) => {
 
   if (!cards.length) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500">
+      <div className="h-full w-full flex items-center justify-center text-gray-500">
         No flashcards generated yet
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[400px] flex flex-col flashcard">
+    <div className="flex flex-col items-center">
       <motion.div
         key={currentIndex}
         initial={{ rotateX: 0 }}
@@ -26,7 +26,7 @@ export const Flashcards = ({ cards }: { cards: Flashcard[] }) => {
           duration: 0.4,
           ease: "easeInOut"
         }}
-        className="flex-1 bg-white rounded-xl shadow-lg cursor-pointer border border-gray-200 h-64"
+        className="bg-white rounded-xl shadow-lg cursor-pointer border border-gray-200 h-[300px] mb-6 w-full max-w-3xl"
         onClick={() => setIsFlipped(!isFlipped)}
         style={{ 
           transformStyle: 'preserve-3d',
@@ -61,7 +61,7 @@ export const Flashcards = ({ cards }: { cards: Flashcard[] }) => {
         </div>
       </motion.div>
 
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-between mt-2 w-full max-w-3xl">
         <DashboardButton
           variant="light"
           color="primary"

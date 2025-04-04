@@ -162,12 +162,12 @@ export default function Dashboard() {
       </div>
 
       {activeView === 'summaries' ? (
-        <div className="h-full w-full flex justify-center items-start">
-            <YoutubeSummarizer onClose={() => setActiveView('dashboard')} />
+        <div className="h-full w-full">
+          <YoutubeSummarizer onClose={() => setActiveView('dashboard')} />
         </div>
       ) : activeView === 'calendar' ? (
           <div className="h-full w-full">
-            <Calendar />
+          <Calendar />
         </div>
       ) : activeView === 'humanizer' ? (
         <AIHumanizer onClose={() => setActiveView('dashboard')} />

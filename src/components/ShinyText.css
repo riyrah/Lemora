@@ -1,7 +1,7 @@
 .shiny-text {
   position: relative; /* Needed for absolute positioning of ::after */
   display: inline-block;
-  color: #b5b5b5e6; /* Brighter base text color (increased opacity from a4 to e6) */
+  color: #b5b5b5a4; /* Original base text color */
   /* Remove background/clip/fill properties from the base element */
 }
 
