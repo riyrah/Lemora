@@ -4,6 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { YoutubeInput, ExampleVideo, Flashcard } from "@/components/YoutubeInput";
 import { YoutubeContent } from "@/components/YoutubeContent";
 import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface YoutubeSummarizerProps {
   onClose: () => void;
@@ -65,6 +66,20 @@ export const YoutubeSummarizer = ({ onClose }: YoutubeSummarizerProps) => {
         setVideoTitle(result.video_title);
         setVideoId(result.video_id);
         setTranscriptData(result.transcript || []); // Store fetched transcript
+        
+        // Show toast notification if fallback methods were used
+        if (result.used_fallback) {
+          toast("The summary was generated using an alternative transcript source and may not be 100% accurate.", {
+            icon: '⚠️'
+          });
+        }
+        
+        // Show more visible notification if no transcript was available
+        if (result.no_transcript) {
+          toast("This summary is based on the video title only, as no transcript could be extracted.", {
+            icon: '❌'
+          });
+        }
       } else {
         console.error("Invalid data type passed to handleSubmit:", data);
         throw new Error("Invalid submission data.");

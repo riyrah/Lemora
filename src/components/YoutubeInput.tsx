@@ -219,7 +219,7 @@ export const YoutubeInput = ({ onSubmit }: YoutubeInputProps) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="max-w-7xl w-full h-full flex flex-col items-center justify-center"
+      className="max-w-7xl w-full h-full flex flex-col items-center justify-center mx-auto px-4"
     >
       <div className="w-full max-w-4xl mb-16">
         <h1 className="text-5xl font-bold text-gray-900 mb-4 text-center tracking-tight">

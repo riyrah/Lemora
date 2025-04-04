@@ -26,6 +26,153 @@ function getVideoId(url: string): string | null {
   return null; // Return null if no ID found
 }
 
+// Fallback method to fetch transcript using YouTube's timedtext API
+async function fallbackFetchTranscript(videoId: string): Promise<{ text: string; duration: number; offset: number; }[]> {
+  console.log(`--- [/api/summarize] Attempting fallback transcript fetch for ${videoId} ---`);
+  
+  try {
+    // First, try to get the available transcript track info
+    const trackInfoResponse = await fetch(`https://www.youtube.com/api/timedtext?v=${videoId}&type=list`);
+    
+    if (!trackInfoResponse.ok) {
+      throw new Error('Failed to fetch track info');
+    }
+    
+    const trackInfoText = await trackInfoResponse.text();
+    
+    // Parse the XML response to find the first available track
+    const trackMatch = trackInfoText.match(/lang_code="([^"]+)".*?lang_original="([^"]+)"/);
+    
+    if (!trackMatch) {
+      throw new Error('No transcript tracks available');
+    }
+    
+    const langCode = trackMatch[1];
+    
+    // Now fetch the actual transcript with the found language code
+    const transcriptResponse = await fetch(
+      `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}`
+    );
+    
+    if (!transcriptResponse.ok) {
+      throw new Error('Failed to fetch transcript content');
+    }
+    
+    const transcriptText = await transcriptResponse.text();
+    
+    // Parse XML transcript
+    const textSegments = transcriptText.match(/<text[^>]*>([\s\S]*?)<\/text>/g) || [];
+    const parsedSegments = textSegments.map((segment, index) => {
+      const startMatch = segment.match(/start="([^"]+)"/);
+      const durMatch = segment.match(/dur="([^"]+)"/);
+      const start = startMatch ? parseFloat(startMatch[1]) : index;
+      const duration = durMatch ? parseFloat(durMatch[1]) : 2;
+      
+      // Extract and clean text content
+      let text = segment.replace(/<[^>]*>/g, ''); // Remove tags
+      text = text.replace(/&amp;/g, '&')
+                 .replace(/&lt;/g, '<')
+                 .replace(/&gt;/g, '>')
+                 .replace(/&quot;/g, '"')
+                 .replace(/&#39;/g, "'"); // Handle HTML entities
+      
+      return {
+        text: text.trim(),
+        offset: Math.floor(start * 1000), // Convert to ms
+        duration: Math.floor(duration * 1000) // Convert to ms
+      };
+    });
+    
+    if (parsedSegments.length === 0) {
+      throw new Error('Transcript available but empty');
+    }
+    
+    return parsedSegments;
+  } catch (error) {
+    console.error(`--- [/api/summarize] Fallback transcript fetch failed: ${error instanceof Error ? error.message : String(error)} ---`);
+    throw new Error(`Fallback transcript method failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Second fallback: Extract transcript from video metadata if possible
+async function getTranscriptFromMetadata(videoId: string): Promise<string> {
+  console.log(`--- [/api/summarize] Attempting transcript extraction from metadata for ${videoId} ---`);
+  
+  try {
+    // Fetch the video page HTML
+    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+    const html = await response.text();
+    
+    // Try to extract the transcript from page metadata
+    // Look for content in the page that might contain transcript data
+    let transcript = '';
+    
+    // Several possible patterns to look for transcript data:
+    // 1. Check for "captionTracks" in the ytInitialPlayerResponse
+    const captionTracksMatch = html.match(/"captionTracks":\s*\[(.*?)\]/);
+    if (captionTracksMatch) {
+      const captionTracks = captionTracksMatch[1];
+      const baseUrlMatch = captionTracks.match(/"baseUrl":\s*"([^"]+)"/);
+      
+      if (baseUrlMatch) {
+        const captionUrl = baseUrlMatch[1].replace(/\\u0026/g, '&');
+        const captionResponse = await fetch(captionUrl);
+        if (captionResponse.ok) {
+          const captionXml = await captionResponse.text();
+          // Extract text from XML (simple approach)
+          const textContent = captionXml.replace(/<[^>]*>/g, ' ');
+          transcript = textContent;
+        }
+      }
+    }
+    
+    // 2. Check for transcript in video description
+    if (!transcript) {
+      const descriptionMatch = html.match(/"description":\s*{"simpleText":\s*"([^"]+)"/);
+      if (descriptionMatch) {
+        // If description has timestamps, it might contain partial transcript
+        transcript = descriptionMatch[1].replace(/\\n/g, ' ');
+      }
+    }
+    
+    if (!transcript) {
+      throw new Error('Could not extract transcript from metadata');
+    }
+    
+    return transcript;
+  } catch (error) {
+    console.error(`--- [/api/summarize] Metadata transcript extraction failed: ${error instanceof Error ? error.message : String(error)} ---`);
+    throw new Error(`Metadata transcript extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Function to summarize the video directly when no transcript is available
+async function generateSummaryWithoutTranscript(videoId: string, videoTitle: string): Promise<string> {
+  console.log(`--- [/api/summarize] Generating summary without transcript for ${videoId} ---`);
+  
+  try {
+    const prompt = `You are tasked with creating a useful summary for a YouTube video titled "${videoTitle}" with ID "${videoId}". 
+    No transcript is available, but please create a summary that:
+    
+    1. Acknowledges that this is based on the video title and not actual content
+    2. Describes what topics someone might expect to see in a video with this title
+    3. Lists possible key points that might be covered
+    4. Suggests what viewers might learn from such a video
+    
+    Format this with proper Markdown headings and bullet points.
+    
+    Note that since you don't have access to the video content itself, make this clear to the reader.`;
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error(`--- [/api/summarize] Failed to generate no-transcript summary: ${error instanceof Error ? error.message : String(error)} ---`);
+    throw new Error(`Failed to generate summary without transcript: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 // Adapted prompt template for Google AI
 const PROMPT_TEMPLATE = `Create a simple, easy-to-understand summary from this YouTube video transcript that even a 10-year-old could understand without watching the video. Follow these rules:
 
@@ -92,43 +239,7 @@ export async function POST(request: Request) {
     }
     console.log(`--- [/api/summarize] Video ID: ${videoId} ---`);
 
-    // Fetch Transcript
-    let transcriptData: { text: string; duration: number; offset: number; }[] = []; // Store structured data
-    let transcriptText = ''; // Keep joined text for summary prompt
-    try {
-      console.log(`--- [/api/summarize] Attempting transcript fetch for ${videoId} ---`); // Added log
-      transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
-      if (!transcriptData || transcriptData.length === 0) {
-          // Handle case where transcript is technically fetched but empty
-          console.log(`--- [/api/summarize] Transcript fetched but is empty for Video ID ${videoId}. ---`);
-          return NextResponse.json({ error: 'Empty transcript', message: 'The video transcript is empty.' }, { status: 404 });
-      }
-      transcriptText = transcriptData.map(t => t.text).join(' ');
-      console.log(`--- [/api/summarize] Transcript fetched successfully, length: ${transcriptText.length} ---`);
-    } catch (error: any) { // Ensure error type allows message access
-      console.error(`--- [/api/summarize] Error fetching transcript for Video ID ${videoId}. Full Error: ---`, error); 
-
-      // --- Add log to see the exact message being checked ---
-      console.log(`--- [/api/summarize] Caught Error Message: [${error.message}] ---`);
-      // --------------------------------------------------------
-
-      let errorMessage = 'Failed to fetch transcript.';
-      let status = 500; // Default to Internal Server Error
-      // Check the message string for specific errors
-      if (error.message?.includes('Transcript is disabled') || error.message?.includes('disabled on this video')) {
-          console.log("--- [/api/summarize] Matched 'Transcript disabled' error. ---"); // Log match
-          errorMessage = 'Transcripts are disabled or unavailable for this video.';
-          status = 404; // Not Found is appropriate
-      } else if (error.message?.includes('Too Many Requests')) {
-           console.log("--- [/api/summarize] Matched 'Too Many Requests' error. ---"); // Log match
-           errorMessage = 'Could not fetch transcript due to rate limits. Please try again later.';
-           status = 429; // Too Many Requests
-      }
-      // Return the error response and stop execution here
-      return NextResponse.json({ error: 'Transcript fetch failed', message: errorMessage }, { status });
-    }
-
-    // Fetch Video Title (using oEmbed)
+    // Fetch Video Title (using oEmbed) - do this early to have title available for fallbacks
     let videoTitle = 'Video Title Not Found';
     try {
       const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
@@ -145,31 +256,114 @@ export async function POST(request: Request) {
        // Non-fatal, proceed without title if necessary
     }
 
-    // Prepare prompt for Google AI using joined text
-    const fullPrompt = PROMPT_TEMPLATE.replace('{transcript}', transcriptText);
+    // Fetch Transcript with multiple fallback methods
+    let transcriptData: { text: string; duration: number; offset: number; }[] = []; // Store structured data
+    let transcriptText = ''; // Keep joined text for summary prompt
+    let usedFallback = false;
+    let summaryText = '';
+    
+    try {
+      // Step 1: Try the primary method
+      console.log(`--- [/api/summarize] Attempting primary transcript fetch for ${videoId} ---`);
+      try {
+        transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
+        if (!transcriptData || transcriptData.length === 0) {
+          throw new Error('Empty transcript returned');
+        }
+        transcriptText = transcriptData.map(t => t.text).join(' ');
+        console.log(`--- [/api/summarize] Primary transcript fetch successful, length: ${transcriptText.length} ---`);
+      } catch (primaryError: any) {
+        console.log(`--- [/api/summarize] Primary transcript fetch failed: ${primaryError.message} ---`);
+        
+        // Step 2: Try the first fallback method
+        try {
+          transcriptData = await fallbackFetchTranscript(videoId);
+          transcriptText = transcriptData.map(t => t.text).join(' ');
+          usedFallback = true;
+          console.log(`--- [/api/summarize] First fallback successful, transcript length: ${transcriptText.length} ---`);
+        } catch (fallbackError: any) {
+          console.log(`--- [/api/summarize] First fallback failed: ${fallbackError.message} ---`);
+          
+          // Step 3: Try extracting from metadata
+          try {
+            transcriptText = await getTranscriptFromMetadata(videoId);
+            transcriptData = [{ text: transcriptText, duration: 0, offset: 0 }]; // Simple structure since we don't have timing
+            usedFallback = true;
+            console.log(`--- [/api/summarize] Metadata extraction successful, transcript length: ${transcriptText.length} ---`);
+          } catch (metadataError: any) {
+            console.log(`--- [/api/summarize] Metadata extraction failed: ${metadataError.message} ---`);
+            
+            // Step 4: Generate a title-based summary when all transcript methods fail
+            summaryText = await generateSummaryWithoutTranscript(videoId, videoTitle);
+            console.log(`--- [/api/summarize] Generated title-based summary (no transcript) ---`);
+            
+            // Return early with the title-based summary
+            return NextResponse.json({
+              summary: summaryText,
+              video_id: videoId,
+              video_title: videoTitle,
+              transcript: [], // Empty array since we don't have transcript
+              no_transcript: true // Flag to indicate no transcript was available
+            });
+          }
+        }
+      }
+      
+      // If we got here, we have some form of transcript
+      
+      // Prepare prompt for Google AI using joined text
+      const fullPrompt = PROMPT_TEMPLATE.replace('{transcript}', transcriptText);
 
-    // Call Google AI
-    console.log('--- [/api/summarize] Calling Google AI API... ---');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Or another suitable model
-    const generationConfig = {
-        temperature: 0.2,
-        topP: 0.95,
-        // frequencyPenalty, etc. not directly available, control via prompt and temperature
-    };
+      // Call Google AI
+      console.log('--- [/api/summarize] Calling Google AI API... ---');
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(fullPrompt);
+      const response = await result.response;
+      summaryText = response.text();
+      console.log('--- [/api/summarize] Google AI response received. ---');
 
-    const result = await model.generateContent(fullPrompt); // Non-streaming for summary
-    const response = await result.response;
-    const summaryText = response.text();
-    console.log('--- [/api/summarize] Google AI response received. ---');
+      // Add a note if we used a fallback method
+      if (usedFallback) {
+        summaryText = `*Note: This summary was generated using an alternative transcript extraction method and may not fully represent the video content.*\n\n${summaryText}`;
+      }
 
-
-    return NextResponse.json({
-      summary: summaryText,
-      video_id: videoId,
-      video_title: videoTitle,
-      transcript: transcriptData // Return the structured transcript array
-    });
-
+      return NextResponse.json({
+        summary: summaryText,
+        video_id: videoId,
+        video_title: videoTitle,
+        transcript: transcriptData, // Return the structured transcript array
+        used_fallback: usedFallback // Flag to indicate fallback was used
+      });
+      
+    } catch (error) {
+      console.error('--- [/api/summarize] All transcript methods failed: ---', error);
+      let errorMessage = 'Unable to generate summary from this video.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Try one last approach - generate a summary based just on the video title
+      try {
+        summaryText = await generateSummaryWithoutTranscript(videoId, videoTitle);
+        console.log(`--- [/api/summarize] Generated title-based summary as last resort ---`);
+        
+        return NextResponse.json({
+          summary: summaryText,
+          video_id: videoId,
+          video_title: videoTitle,
+          transcript: [], // Empty array since we don't have transcript
+          no_transcript: true, // Flag to indicate no transcript was available
+          error_info: errorMessage // Include original error for debugging
+        });
+      } catch (summaryError) {
+        // If even this fails, return an error
+        return NextResponse.json({ 
+          error: 'Failed to generate any kind of summary', 
+          message: errorMessage 
+        }, { status: 500 });
+      }
+    }
   } catch (error) {
     console.error('--- [/api/summarize] General Error: ---', error);
     let errorMessage = 'Failed to generate summary';

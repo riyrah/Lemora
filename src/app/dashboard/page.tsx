@@ -393,7 +393,7 @@ export default function Dashboard() {
           </Sidebar>
           
           <div className="flex-1 min-w-0 overflow-hidden">
-      <Content />
+            <Content />
           </div>
           
           <div className="fixed bottom-4 right-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md z-50">
